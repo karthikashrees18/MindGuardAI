@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  database:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      - MONGO_URI=mongodb://database:27017
+    ports:
+      - "8000:8000"
+    depends_on:
+      - database
+
+  frontend:
+    build: ./frontend
+    env_file: .env
+    environment:
+      - VITE_API_BASE=http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:
