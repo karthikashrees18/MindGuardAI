@@ -4,7 +4,7 @@ import {
   BarChart2, User, Home as HomeIcon, BookOpen, Send, Mic, PhoneCall,
   Headphones, Stethoscope, CalendarDays, Users, Lock, Bell, Download,
   ChevronRight, ChevronLeft, LogOut, Moon, Sun, TrendingDown, PauseCircle,
-  Waves, AlertCircle, Menu, X,
+  Waves, AlertCircle, Menu, X, Eye, EyeOff,
 } from "lucide-react";
 import { api, saveToken, getStoredUserId, setStoredUserId } from "./api";
 
@@ -468,19 +468,474 @@ function SplashPage({ t, theme, setTheme, go }) {
   );
 }
 
+/* ---------------------------------------------------------------------- */
+/*  SIGN-UP WIZARD — 4-step onboarding for the wellness platform          */
+/* ---------------------------------------------------------------------- */
+
+const SIGNUP_STEPS = [
+  { key: "account", label: "Account" },
+  { key: "academic", label: "Academic" },
+  { key: "circle", label: "Emergency Circle" },
+  { key: "preferences", label: "Preferences" },
+];
+
+const EMPTY_SIGNUP_FORM = {
+  name: "",
+  preferredName: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+
+  dob: "",
+  genderIdentity: "",
+  genderCustom: "",
+  institution: "",
+  department: "",
+  yearOfStudy: "",
+
+  peerName: "",
+  peerRelationship: "",
+  peerPhone: "",
+  peerEmail: "",
+
+  guardianName: "",
+  guardianRelationship: "",
+  guardianPhone: "",
+  guardianEmail: "",
+
+  checkinTime: "morning",
+  privacyConsent: false,
+  crisisConsent: false,
+};
+
+function validateSignupStep(step, f) {
+  const e = {};
+  if (step === 0) {
+    if (!f.name.trim()) e.name = "Full name is required.";
+    if (!f.email.trim()) e.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Enter a valid email address.";
+    if (!f.password) e.password = "Password is required.";
+    else if (f.password.length < 8) e.password = "Use at least 8 characters.";
+    if (f.confirmPassword !== f.password) e.confirmPassword = "Passwords don't match.";
+  }
+  if (step === 1) {
+    if (!f.dob) e.dob = "Date of birth is required.";
+    if (!f.genderIdentity) e.genderIdentity = "Please select an option.";
+    if (f.genderIdentity === "custom" && !f.genderCustom.trim()) e.genderCustom = "Please tell us how to describe this.";
+    if (!f.institution.trim()) e.institution = "Institution is required.";
+  }
+  if (step === 2) {
+    if (!f.peerName.trim()) e.peerName = "Add at least one trusted contact.";
+    if (!f.peerPhone.trim()) e.peerPhone = "A phone number is required.";
+    if (!f.guardianName.trim()) e.guardianName = "Guardian name is required.";
+    if (!f.guardianPhone.trim()) e.guardianPhone = "A phone number is required.";
+  }
+  if (step === 3) {
+    if (!f.privacyConsent) e.privacyConsent = "Please review and accept to continue.";
+    if (!f.crisisConsent) e.crisisConsent = "Please review and accept to continue.";
+  }
+  return e;
+}
+
+function passwordStrength(pw) {
+  if (!pw) return { score: 0, label: "" };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const labels = ["Very weak", "Weak", "Fair", "Good", "Strong", "Very strong"];
+  return { score, label: labels[Math.min(score, labels.length - 1)] };
+}
+
+function selectStyle(t) {
+  return { ...inputStyle(t), cursor: "pointer" };
+}
+
+function StepPills({ t, steps, activeIndex }) {
+  return (
+    <div style={{ display: "flex", gap: 8, marginBottom: 2 }}>
+      {steps.map((s, i) => {
+        const state = i < activeIndex ? "done" : i === activeIndex ? "active" : "todo";
+        return (
+          <div key={s.key} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ height: 5, borderRadius: 4, background: state === "todo" ? t.track : state === "active" ? t.tealGrad : t.tealDeep }} />
+            <div style={{ fontSize: 10, fontWeight: state === "active" ? 700 : 500, color: state === "todo" ? t.textFaint : t.tealDeep }}>
+              {i + 1}. {s.label}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function FieldLabel({ t, children, hint }) {
+  return (
+    <div style={{ fontSize: 12, fontWeight: 600, color: t.textSecondary, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+      {children}
+      {hint && (
+        <span title={hint} style={{ cursor: "help", color: t.textFaint, display: "flex" }}>
+          <AlertCircle size={12} />
+        </span>
+      )}
+    </div>
+  );
+}
+
+function FieldError({ t, msg }) {
+  if (!msg) return null;
+  return (
+    <div role="alert" style={{ fontSize: 11, color: t.coralDeep, marginTop: 5 }}>
+      {msg}
+    </div>
+  );
+}
+
+function PasswordField({ t, value, onChange, placeholder, showStrength, ariaLabel }) {
+  const [visible, setVisible] = useState(false);
+  const strength = showStrength ? passwordStrength(value) : null;
+  return (
+    <div>
+      <div style={{ position: "relative" }}>
+        <input
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          aria-label={ariaLabel || placeholder}
+          style={{ ...inputStyle(t), paddingRight: 40 }}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? "Hide password" : "Show password"}
+          style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: t.textFaint, cursor: "pointer", padding: 6, display: "flex" }}
+        >
+          {visible ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
+      </div>
+      {showStrength && value && (
+        <div style={{ marginTop: 7 }}>
+          <div style={{ display: "flex", gap: 4 }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  height: 4,
+                  borderRadius: 3,
+                  background: i < strength.score ? (strength.score <= 1 ? t.coral : strength.score <= 2 ? "#F5B942" : t.teal) : t.track,
+                }}
+              />
+            ))}
+          </div>
+          <div style={{ fontSize: 10.5, color: t.textFaint, marginTop: 3 }}>{strength.label}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SignupWizard({ t, onCreated, onSwitchToLogin }) {
+  const [step, setStep] = useState(0);
+  const [f, setF] = useState(EMPTY_SIGNUP_FORM);
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  function update(field, value) {
+    setF((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  }
+
+  function goNext() {
+    const stepErrors = validateSignupStep(step, f);
+    if (Object.keys(stepErrors).length) {
+      setErrors(stepErrors);
+      return;
+    }
+    setErrors({});
+    setStep((s) => Math.min(s + 1, SIGNUP_STEPS.length - 1));
+  }
+
+  function goBack() {
+    setErrors({});
+    setStep((s) => Math.max(s - 1, 0));
+  }
+
+  async function submit() {
+    const stepErrors = validateSignupStep(step, f);
+    if (Object.keys(stepErrors).length) {
+      setErrors(stepErrors);
+      return;
+    }
+    setServerError("");
+    setBusy(true);
+    try {
+      const payload = {
+        name: f.name.trim(),
+        email: f.email.trim(),
+        password: f.password,
+        profile: {
+          preferred_name: f.preferredName.trim() || null,
+          date_of_birth: f.dob || null,
+          gender_identity: f.genderIdentity || null,
+          gender_custom: f.genderIdentity === "custom" ? f.genderCustom.trim() : null,
+          institution: f.institution.trim() || null,
+          department: f.department.trim() || null,
+          year_of_study: f.yearOfStudy.trim() || null,
+        },
+        peer_contact: f.peerName.trim()
+          ? {
+              full_name: f.peerName.trim(),
+              relationship: f.peerRelationship.trim() || null,
+              phone_number: f.peerPhone.trim(),
+              email: f.peerEmail.trim() || null,
+            }
+          : null,
+        guardian_contact: f.guardianName.trim()
+          ? {
+              full_name: f.guardianName.trim(),
+              relationship: f.guardianRelationship.trim() || null,
+              phone_number: f.guardianPhone.trim(),
+              email: f.guardianEmail.trim() || null,
+            }
+          : null,
+        preferences: {
+          checkin_time: f.checkinTime,
+          privacy_consent: f.privacyConsent,
+          crisis_consent: f.crisisConsent,
+        },
+      };
+      const result = await api.signup(payload);
+      await onCreated(result.access_token);
+    } catch (err) {
+      setServerError(err.message || "Something went wrong — is the backend running?");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={{ width: "100%", maxWidth: 440, display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>Create your account</div>
+        <div style={{ fontSize: 12.5, color: t.textSecondary }}>A few short steps — you can always update these later in Profile.</div>
+      </div>
+
+      <StepPills t={t} steps={SIGNUP_STEPS} activeIndex={step} />
+
+      {step === 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <FieldLabel t={t}>Full name</FieldLabel>
+            <input value={f.name} onChange={(e) => update("name", e.target.value)} placeholder="Full name" style={inputStyle(t)} aria-label="Full name" />
+            <FieldError t={t} msg={errors.name} />
+          </div>
+          <div>
+            <FieldLabel t={t} hint="Shown across the app instead of your full name, if you'd like something more personal.">
+              Preferred name / nickname (optional)
+            </FieldLabel>
+            <input value={f.preferredName} onChange={(e) => update("preferredName", e.target.value)} placeholder="What should we call you?" style={inputStyle(t)} aria-label="Preferred name" />
+          </div>
+          <div>
+            <FieldLabel t={t}>Student email address</FieldLabel>
+            <input value={f.email} onChange={(e) => update("email", e.target.value)} placeholder="you@university.edu" style={inputStyle(t)} aria-label="Student email address" />
+            <FieldError t={t} msg={errors.email} />
+          </div>
+          <div>
+            <FieldLabel t={t}>Password</FieldLabel>
+            <PasswordField t={t} value={f.password} onChange={(e) => update("password", e.target.value)} placeholder="At least 8 characters" showStrength ariaLabel="Password" />
+            <FieldError t={t} msg={errors.password} />
+          </div>
+          <div>
+            <FieldLabel t={t}>Confirm password</FieldLabel>
+            <PasswordField t={t} value={f.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} placeholder="Re-enter your password" ariaLabel="Confirm password" />
+            <FieldError t={t} msg={errors.confirmPassword} />
+          </div>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <FieldLabel t={t}>Date of birth</FieldLabel>
+            <input type="date" value={f.dob} onChange={(e) => update("dob", e.target.value)} style={inputStyle(t)} aria-label="Date of birth" />
+            <FieldError t={t} msg={errors.dob} />
+          </div>
+          <div>
+            <FieldLabel t={t}>Gender identity</FieldLabel>
+            <select value={f.genderIdentity} onChange={(e) => update("genderIdentity", e.target.value)} style={selectStyle(t)} aria-label="Gender identity">
+              <option value="">Select…</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="non_binary">Non-binary</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+              <option value="custom">Prefer to self-describe</option>
+            </select>
+            <FieldError t={t} msg={errors.genderIdentity} />
+          </div>
+          {f.genderIdentity === "custom" && (
+            <div>
+              <input value={f.genderCustom} onChange={(e) => update("genderCustom", e.target.value)} placeholder="How would you describe it?" style={inputStyle(t)} aria-label="Self-described gender" />
+              <FieldError t={t} msg={errors.genderCustom} />
+            </div>
+          )}
+          <div>
+            <FieldLabel t={t}>Institution (college / university / school)</FieldLabel>
+            <input value={f.institution} onChange={(e) => update("institution", e.target.value)} placeholder="e.g. State University" style={inputStyle(t)} aria-label="Institution" />
+            <FieldError t={t} msg={errors.institution} />
+          </div>
+          <div className="mga-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <FieldLabel t={t}>Department / major</FieldLabel>
+              <input value={f.department} onChange={(e) => update("department", e.target.value)} placeholder="e.g. Psychology" style={inputStyle(t)} aria-label="Department or major" />
+            </div>
+            <div>
+              <FieldLabel t={t}>Year / semester</FieldLabel>
+              <input value={f.yearOfStudy} onChange={(e) => update("yearOfStudy", e.target.value)} placeholder="e.g. 2nd year" style={inputStyle(t)} aria-label="Year or semester" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ background: t.tealSoft, borderRadius: 12, padding: 12, fontSize: 11.5, color: t.tealDeep, lineHeight: 1.5, display: "flex", gap: 8 }}>
+            <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>In moments of severe crisis or distress, having a designated support circle helps us reach out and keep you safe. These contacts are only ever used for that purpose.</span>
+          </div>
+
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: t.textPrimary, marginTop: 2 }}>Trusted peer / emergency contact</div>
+          <div>
+            <input value={f.peerName} onChange={(e) => update("peerName", e.target.value)} placeholder="Full name (e.g. best friend, roommate)" style={inputStyle(t)} aria-label="Trusted contact full name" />
+            <FieldError t={t} msg={errors.peerName} />
+          </div>
+          <div className="mga-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <input value={f.peerRelationship} onChange={(e) => update("peerRelationship", e.target.value)} placeholder="Relationship" style={inputStyle(t)} aria-label="Trusted contact relationship" />
+            <div>
+              <input value={f.peerPhone} onChange={(e) => update("peerPhone", e.target.value)} placeholder="Phone number" style={inputStyle(t)} aria-label="Trusted contact phone number" />
+              <FieldError t={t} msg={errors.peerPhone} />
+            </div>
+          </div>
+          <input value={f.peerEmail} onChange={(e) => update("peerEmail", e.target.value)} placeholder="Email (optional)" style={inputStyle(t)} aria-label="Trusted contact email" />
+
+          <div style={{ height: 1, background: t.border, margin: "6px 0" }} />
+
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: t.textPrimary }}>Parent / guardian</div>
+          <div>
+            <input value={f.guardianName} onChange={(e) => update("guardianName", e.target.value)} placeholder="Full name" style={inputStyle(t)} aria-label="Guardian full name" />
+            <FieldError t={t} msg={errors.guardianName} />
+          </div>
+          <select value={f.guardianRelationship} onChange={(e) => update("guardianRelationship", e.target.value)} style={selectStyle(t)} aria-label="Guardian relationship">
+            <option value="">Relationship…</option>
+            <option value="Father">Father</option>
+            <option value="Mother">Mother</option>
+            <option value="Legal Guardian">Legal guardian</option>
+            <option value="Other">Other</option>
+          </select>
+          <div className="mga-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <input value={f.guardianPhone} onChange={(e) => update("guardianPhone", e.target.value)} placeholder="Phone number" style={inputStyle(t)} aria-label="Guardian phone number" />
+              <FieldError t={t} msg={errors.guardianPhone} />
+            </div>
+            <input value={f.guardianEmail} onChange={(e) => update("guardianEmail", e.target.value)} placeholder="Email (optional)" style={inputStyle(t)} aria-label="Guardian email" />
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <FieldLabel t={t}>Preferred check-in time</FieldLabel>
+            <div style={{ display: "flex", gap: 10 }}>
+              {["morning", "evening"].map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => update("checkinTime", opt)}
+                  style={{
+                    flex: 1,
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    border: `1px solid ${f.checkinTime === opt ? t.teal : t.border}`,
+                    background: f.checkinTime === opt ? t.tealSoft : t.surface,
+                    color: f.checkinTime === opt ? t.tealDeep : t.textSecondary,
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 12, color: t.textSecondary, cursor: "pointer" }}>
+              <input type="checkbox" checked={f.privacyConsent} onChange={(e) => update("privacyConsent", e.target.checked)} style={{ marginTop: 2 }} />
+              <span>I understand how my journal entries, chats, and personal data are kept confidential, and I consent to Mind Guard AI's data handling practices.</span>
+            </label>
+            <FieldError t={t} msg={errors.privacyConsent} />
+          </div>
+
+          <div>
+            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 12, color: t.textSecondary, cursor: "pointer" }}>
+              <input type="checkbox" checked={f.crisisConsent} onChange={(e) => update("crisisConsent", e.target.checked)} style={{ marginTop: 2 }} />
+              <span>I acknowledge that in a detected crisis, Mind Guard AI may reach out to my trusted contact, guardian, or a counselor to help keep me safe.</span>
+            </label>
+            <FieldError t={t} msg={errors.crisisConsent} />
+          </div>
+        </div>
+      )}
+
+      {serverError && <div style={{ fontSize: 11.5, color: t.coralDeep }}>{serverError}</div>}
+
+      <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+        {step > 0 && (
+          <GhostButton t={t} onClick={goBack} style={{ flex: 1 }}>
+            <ChevronLeft size={15} /> Back
+          </GhostButton>
+        )}
+        {step < SIGNUP_STEPS.length - 1 ? (
+          <PrimaryButton grad={t.tealGrad} shadowColor="rgba(77,182,172,0.35)" onClick={goNext} style={{ flex: 1 }}>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              Next <ChevronRight size={15} />
+            </span>
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton grad={t.tealGrad} shadowColor="rgba(77,182,172,0.35)" onClick={submit} style={{ flex: 1, opacity: busy ? 0.7 : 1 }}>
+            {busy ? "Creating account…" : "Create account"}
+          </PrimaryButton>
+        )}
+      </div>
+
+      <div style={{ fontSize: 12.5, color: t.textSecondary, textAlign: "center" }}>
+        Already have an account?{" "}
+        <span onClick={onSwitchToLogin} style={{ color: t.teal, fontWeight: 700, cursor: "pointer" }}>
+          Sign in
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function LoginPage({ t, theme, setTheme, go, onLogin }) {
   const [isSignup, setIsSignup] = useState(false);
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function submit() {
+  async function submitLogin() {
     setError("");
     setBusy(true);
     try {
-      const result = isSignup ? await api.signup(name, email, password) : await api.login(email, password);
+      const result = await api.login(email, password);
       saveToken(result.access_token);
       const me = await api.me();
       setStoredUserId(me.id);
@@ -490,6 +945,13 @@ function LoginPage({ t, theme, setTheme, go, onLogin }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function finishSignup(accessToken) {
+    saveToken(accessToken);
+    const me = await api.me();
+    setStoredUserId(me.id);
+    onLogin();
   }
 
   return (
@@ -502,32 +964,54 @@ function LoginPage({ t, theme, setTheme, go, onLogin }) {
             Track your mood, journal your thoughts, and let your AI companion notice the patterns — so support finds you before overthinking takes over.
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 40, position: "relative" }}>
+        <div
+          className="mga-scroll"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: isSignup ? "flex-start" : "center",
+            alignItems: "center",
+            padding: isSignup ? "70px 40px 50px" : 40,
+            position: "relative",
+            overflowY: "auto",
+            maxHeight: "100vh",
+          }}
+        >
           <button
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             style={{ position: "absolute", top: 20, right: 20, width: 34, height: 34, borderRadius: 999, border: `1px solid ${t.border}`, background: t.inputBg, color: t.textSecondary, cursor: "pointer" }}
           >
             {theme === "light" ? <Moon size={14} /> : <Sun size={14} />}
           </button>
-          <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>
-              {isSignup ? "Create your account" : "Welcome back"}
+
+          {isSignup ? (
+            <SignupWizard t={t} onCreated={finishSignup} onSwitchToLogin={() => setIsSignup(false)} />
+          ) : (
+            <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>Welcome back</div>
+              <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle(t)} aria-label="Email" />
+              <input
+                placeholder="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitLogin()}
+                style={inputStyle(t)}
+                aria-label="Password"
+              />
+              {error && <div style={{ fontSize: 11.5, color: t.coralDeep }}>{error}</div>}
+              <div style={{ fontSize: 12, color: t.lavender, textAlign: "right", fontWeight: 600, cursor: "pointer" }}>Forgot password?</div>
+              <PrimaryButton grad={t.tealGrad} shadowColor="rgba(77,182,172,0.35)" onClick={submitLogin} style={{ marginTop: 4, opacity: busy ? 0.7 : 1 }}>
+                {busy ? "Please wait…" : "Sign in"}
+              </PrimaryButton>
+              <div style={{ fontSize: 12.5, color: t.textSecondary, textAlign: "center", marginTop: 6 }}>
+                New here?{" "}
+                <span onClick={() => setIsSignup(true)} style={{ color: t.teal, fontWeight: 700, cursor: "pointer" }}>
+                  Sign up
+                </span>
+              </div>
             </div>
-            {isSignup && <input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle(t)} />}
-            <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle(t)} />
-            <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} style={inputStyle(t)} />
-            {error && <div style={{ fontSize: 11.5, color: t.coralDeep }}>{error}</div>}
-            {!isSignup && <div style={{ fontSize: 12, color: t.lavender, textAlign: "right", fontWeight: 600, cursor: "pointer" }}>Forgot password?</div>}
-            <PrimaryButton grad={t.tealGrad} shadowColor="rgba(77,182,172,0.35)" onClick={submit} style={{ marginTop: 4, opacity: busy ? 0.7 : 1 }}>
-              {busy ? "Please wait…" : isSignup ? "Create account" : "Sign in"}
-            </PrimaryButton>
-            <div style={{ fontSize: 12.5, color: t.textSecondary, textAlign: "center", marginTop: 6 }}>
-              {isSignup ? "Already have an account? " : "New here? "}
-              <span onClick={() => setIsSignup((v) => !v)} style={{ color: t.teal, fontWeight: 700, cursor: "pointer" }}>
-                {isSignup ? "Sign in" : "Sign up"}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
