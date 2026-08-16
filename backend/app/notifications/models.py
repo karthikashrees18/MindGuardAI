@@ -19,3 +19,6 @@ class TrustedContact(BaseModel):
     user_id: str
     name: str
     phone_number: str
+    email: Optional[str] = None
+    relationship: Optional[str] = None
+    role: Literal["peer", "guardian"] = "peer"

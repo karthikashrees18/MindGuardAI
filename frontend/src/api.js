@@ -35,8 +35,10 @@ async function request(path, options = {}) {
 
 export const api = {
   // auth-service
-  signup: (name, email, password) =>
-    request("/api/auth/signup", { method: "POST", body: JSON.stringify({ name, email, password }) }),
+  // `payload` may include the full onboarding shape the wizard collects:
+  // { name, email, password, profile, peer_contact, guardian_contact, preferences }
+  signup: (payload) =>
+    request("/api/auth/signup", { method: "POST", body: JSON.stringify(payload) }),
   login: (email, password) =>
     request("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   me: () => request("/api/auth/me"),
