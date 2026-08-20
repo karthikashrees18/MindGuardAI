@@ -4,7 +4,7 @@ import {
   BarChart2, User, Home as HomeIcon, BookOpen, Send, Mic, PhoneCall,
   Headphones, Stethoscope, CalendarDays, Users, Lock, Bell, Download,
   ChevronRight, ChevronLeft, LogOut, Moon, Sun, TrendingDown, PauseCircle,
-  Waves, AlertCircle, Menu, X, Eye, EyeOff,
+  Waves, AlertCircle, Menu, X, Eye, EyeOff, Mail, CheckCircle2,
 } from "lucide-react";
 import { api, saveToken, getStoredUserId, setStoredUserId } from "./api";
 
@@ -101,6 +101,100 @@ function GlobalStyle() {
         outline: 2px solid #4DB6AC;
         outline-offset: 2px;
       }
+
+      /* ---- Login page: motion + micro-interactions ---- */
+      @keyframes mga-fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes mga-shake { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(2px); } 30%, 50%, 70% { transform: translateX(-4px); } 40%, 60% { transform: translateX(4px); } }
+      @keyframes mga-float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-14px); } }
+      @keyframes mga-spin { to { transform: rotate(360deg); } }
+      .mga-fade-up { animation: mga-fade-up 0.45s ease both; }
+      .mga-shake { animation: mga-shake 0.4s ease; }
+      .mga-float-slow { animation: mga-float 6s ease-in-out infinite; }
+      .mga-float-slower { animation: mga-float 8s ease-in-out infinite 0.5s; }
+      .mga-input-wrap { position: relative; display: flex; align-items: center; }
+      .mga-input-el { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+      .mga-input-el:focus { box-shadow: 0 0 0 3px rgba(77,182,172,0.18); }
+      .mga-input-el.mga-input-error { animation: mga-shake 0.4s ease; }
+      .mga-input-icon { position: absolute; left: 13px; pointer-events: none; }
+      .mga-input-check { position: absolute; right: 12px; }
+      .mga-eye-btn { position: absolute; right: 10px; background: none; border: none; cursor: pointer; display: flex; padding: 4px; border-radius: 6px; color: inherit; }
+      .mga-eye-btn:hover { background: rgba(148,163,184,0.15); }
+      .mga-tab-switch { position: relative; display: flex; border-radius: 12px; padding: 4px; }
+      .mga-tab-pill { position: absolute; top: 4px; bottom: 4px; border-radius: 9px; transition: left 0.25s cubic-bezier(.4,0,.2,1); z-index: 0; }
+      .mga-tab-btn { flex: 1; border: none; background: transparent; padding: 9px 0; font-size: 12.5px; font-weight: 700; cursor: pointer; position: relative; z-index: 1; border-radius: 9px; transition: color 0.2s ease; }
+      .mga-spinner { width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; animation: mga-spin 0.6s linear infinite; display: inline-block; }
+
+      /* ---- Login page v2: aurora background + glassmorphism ---- */
+      @keyframes mga-aurora-move {
+        0% { transform: translate(0,0) scale(1); }
+        33% { transform: translate(4%, -3%) scale(1.08); }
+        66% { transform: translate(-3%, 4%) scale(0.96); }
+        100% { transform: translate(0,0) scale(1); }
+      }
+      @keyframes mga-orb-drift-a { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(46px, -64px); } }
+      @keyframes mga-orb-drift-b { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(-54px, 52px); } }
+      @keyframes mga-orb-drift-c { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(32px, 44px); } }
+      @keyframes mga-glass-in { from { opacity: 0; transform: translateY(26px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      @keyframes mga-stagger-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes mga-ripple { to { transform: scale(1); opacity: 0; } }
+      @keyframes mga-glow-pulse {
+        0%, 100% { box-shadow: 0 0 20px 0 rgba(93,211,196,0.35), 0 8px 24px -8px rgba(93,211,196,0.4); }
+        50% { box-shadow: 0 0 34px 6px rgba(93,211,196,0.55), 0 8px 30px -6px rgba(179,157,219,0.45); }
+      }
+      .mga-aurora-bg { position: fixed; inset: 0; overflow: hidden; z-index: 0; background: #060911; }
+      .mga-aurora-layer {
+        position: absolute; inset: -25%;
+        background:
+          radial-gradient(circle at 20% 28%, rgba(93,211,196,0.55), transparent 55%),
+          radial-gradient(circle at 78% 18%, rgba(179,157,219,0.5), transparent 50%),
+          radial-gradient(circle at 62% 78%, rgba(255,138,128,0.32), transparent 55%),
+          radial-gradient(circle at 12% 82%, rgba(93,211,196,0.32), transparent 50%);
+        filter: blur(70px);
+        animation: mga-aurora-move 24s ease-in-out infinite;
+      }
+      .mga-orb { position: absolute; border-radius: 50%; filter: blur(1px); mix-blend-mode: screen; opacity: 0.55; pointer-events: none; }
+      .mga-glass-panel {
+        position: relative; z-index: 1;
+        backdrop-filter: blur(24px) saturate(160%);
+        -webkit-backdrop-filter: blur(24px) saturate(160%);
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 28px;
+        box-shadow: 0 30px 80px -20px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08);
+        animation: mga-glass-in 0.6s cubic-bezier(.16,1,.3,1) both;
+      }
+      .mga-stagger-item { opacity: 0; animation: mga-stagger-in 0.5s ease both; }
+      .mga-neon-input {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.14);
+        color: #F1F5F9;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      }
+      .mga-neon-input::placeholder { color: rgba(241,245,249,0.4); }
+      .mga-neon-input:focus {
+        border-color: rgba(93,211,196,0.7);
+        box-shadow: 0 0 0 3px rgba(93,211,196,0.16), 0 0 22px rgba(93,211,196,0.22);
+        background: rgba(255,255,255,0.08);
+      }
+      .mga-neon-input.mga-input-error { border-color: rgba(255,138,128,0.75); animation: mga-shake 0.4s ease; }
+      .mga-glow-btn {
+        position: relative; overflow: hidden;
+        border: none; border-radius: 14px; padding: 15px 20px;
+        font-size: 14px; font-weight: 700; color: #06231D; cursor: pointer;
+        background: linear-gradient(135deg, #8FF6E6, #5FD1C4 45%, #B39DDB);
+        animation: mga-glow-pulse 2.8s ease-in-out infinite;
+        transition: transform 0.15s ease-out;
+      }
+      .mga-glow-btn:disabled { cursor: not-allowed; opacity: 0.7; animation: none; }
+      .mga-ripple-span {
+        position: absolute; border-radius: 50%;
+        background: rgba(255,255,255,0.55);
+        transform: scale(0); animation: mga-ripple 0.6s ease-out forwards;
+        pointer-events: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .mga-aurora-layer, .mga-orb, .mga-glow-btn { animation: none !important; }
+      }
     `}</style>
   );
 }
@@ -146,6 +240,61 @@ function PrimaryButton({ grad, shadowColor, children, onClick, style }) {
       }}
     >
       {children}
+    </button>
+  );
+}
+
+/* A premium "wow" button: tilts toward the cursor (magnetic pull) and spawns
+   a ripple from the click point. Used on the redesigned login screen. */
+function MagneticGlowButton({ children, onClick, disabled, style }) {
+  const ref = useRef(null);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [ripples, setRipples] = useState([]);
+
+  function handleMove(e) {
+    const el = ref.current;
+    if (!el || disabled) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    setPos({ x: x * 0.12, y: y * 0.3 });
+  }
+
+  function handleLeave() {
+    setPos({ x: 0, y: 0 });
+  }
+
+  function handleClick(e) {
+    const el = ref.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height) * 1.5;
+      const id = Date.now() + Math.random();
+      const rx = e.clientX - rect.left - size / 2;
+      const ry = e.clientY - rect.top - size / 2;
+      setRipples((r) => [...r, { id, size, rx, ry }]);
+      window.setTimeout(() => setRipples((r) => r.filter((rp) => rp.id !== id)), 600);
+    }
+    onClick && onClick(e);
+  }
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className="mga-glow-btn"
+      disabled={disabled}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      onClick={handleClick}
+      style={{ transform: `translate(${pos.x}px, ${pos.y}px)`, ...style }}
+    >
+      {ripples.map((r) => (
+        <span key={r.id} className="mga-ripple-span" style={{ width: r.size, height: r.size, left: r.rx, top: r.ry }} />
+      ))}
+      <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        {children}
+      </span>
     </button>
   );
 }
@@ -468,9 +617,17 @@ function SplashPage({ t, theme, setTheme, go }) {
   );
 }
 
-/* ---------------------------------------------------------------------- */
-/*  SIGN-UP WIZARD — 4-step onboarding for the wellness platform          */
-/* ---------------------------------------------------------------------- */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function passwordStrength(pw) {
+  if (!pw) return 0;
+  let s = 0;
+  if (pw.length >= 6) s++;
+  if (pw.length >= 10) s++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++;
+  if (/[0-9]/.test(pw) && /[^A-Za-z0-9]/.test(pw)) s++;
+  return Math.min(s, 4);
+}
 
 const SIGNUP_STEPS = [
   { key: "account", label: "Account" },
@@ -926,97 +1083,224 @@ function SignupWizard({ t, onCreated, onSwitchToLogin }) {
 
 function LoginPage({ t, theme, setTheme, go, onLogin }) {
   const [isSignup, setIsSignup] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState({});
+  const [shakeField, setShakeField] = useState("");
 
-  async function submitLogin() {
+  const nameValid = !isSignup || name.trim().length >= 2;
+  const emailValid = EMAIL_RE.test(email);
+  const passwordValid = password.length >= 6;
+  const strength = passwordStrength(password);
+  const strengthMeta = [
+    { label: "Too short", color: "#FF9A90" },
+    { label: "Weak", color: "#FF9A90" },
+    { label: "Okay", color: "#F5C86B" },
+    { label: "Good", color: "#5FD1C4" },
+    { label: "Strong", color: "#8FF6E6" },
+  ][strength];
+
+  function markTouched(field) {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  }
+
+  function triggerShake(field) {
+    setShakeField(field);
+    window.setTimeout(() => setShakeField(""), 400);
+  }
+
+  function fieldStyle(field, valid) {
+    const decided = touched[field];
+    return {
+      width: "100%",
+      borderRadius: 14,
+      padding: "13px 14px 13px 40px",
+      paddingRight: field === "password" ? 40 : 14,
+      fontSize: 13.5,
+      boxSizing: "border-box",
+      borderWidth: 1,
+      borderStyle: "solid",
+      borderColor: decided ? (valid ? "rgba(93,211,196,0.7)" : "rgba(255,138,128,0.75)") : "rgba(255,255,255,0.14)",
+      outline: "none",
+    };
+  }
+
+  async function submit() {
     setError("");
+    setTouched({ name: true, email: true, password: true });
+
+    if (!nameValid) return triggerShake("name");
+    if (!emailValid) return triggerShake("email");
+    if (!passwordValid) return triggerShake("password");
+
     setBusy(true);
     try {
-      const result = await api.login(email, password);
+      const result = isSignup ? await api.signup(name, email, password) : await api.login(email, password);
       saveToken(result.access_token);
       const me = await api.me();
       setStoredUserId(me.id);
       onLogin();
     } catch (err) {
       setError(err.message || "Something went wrong — is the backend running?");
+      triggerShake("form");
     } finally {
       setBusy(false);
     }
   }
 
-  async function finishSignup(accessToken) {
-    saveToken(accessToken);
-    const me = await api.me();
-    setStoredUserId(me.id);
-    onLogin();
-  }
+  const stagger = (i) => ({ animationDelay: `${0.08 + i * 0.06}s` });
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", background: t.page }}>
-      <div className="mga-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", width: "100%" }}>
-        <div style={{ background: t.heroGrad, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-start", padding: "60px", color: "#fff" }}>
-          <ShieldCheck size={40} style={{ marginBottom: 20 }} />
-          <div style={{ fontSize: 26, fontWeight: 700, marginBottom: 12 }}>Welcome to Mind Guard AI</div>
-          <div style={{ fontSize: 14, lineHeight: 1.7, maxWidth: 380, color: "rgba(255,255,255,0.9)" }}>
-            Track your mood, journal your thoughts, and let your AI companion notice the patterns — so support finds you before overthinking takes over.
+    <div style={{ minHeight: "100vh", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, overflow: "hidden" }}>
+      {/* Immersive aurora mesh background — fills the entire viewport */}
+      <div className="mga-aurora-bg">
+        <div className="mga-aurora-layer" />
+        <div className="mga-orb" style={{ top: "12%", left: "8%", width: 220, height: 220, background: "radial-gradient(circle, rgba(93,211,196,0.55), transparent 70%)", animation: "mga-orb-drift-a 13s ease-in-out infinite" }} />
+        <div className="mga-orb" style={{ top: "58%", right: "10%", width: 260, height: 260, background: "radial-gradient(circle, rgba(179,157,219,0.5), transparent 70%)", animation: "mga-orb-drift-b 16s ease-in-out infinite" }} />
+        <div className="mga-orb" style={{ bottom: "6%", left: "38%", width: 180, height: 180, background: "radial-gradient(circle, rgba(255,138,128,0.4), transparent 70%)", animation: "mga-orb-drift-c 11s ease-in-out infinite" }} />
+        <div className="mga-orb" style={{ top: "6%", right: "28%", width: 130, height: 130, background: "radial-gradient(circle, rgba(93,211,196,0.4), transparent 70%)", animation: "mga-orb-drift-b 14s ease-in-out infinite" }} />
+      </div>
+
+      <button
+        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+        style={{ position: "absolute", top: 22, right: 22, zIndex: 2, width: 38, height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.16)", background: "rgba(255,255,255,0.06)", backdropFilter: "blur(10px)", color: "#F1F5F9", cursor: "pointer" }}
+      >
+        {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
+      </button>
+
+      {/* Centered glass panel */}
+      <div key={isSignup ? "signup" : "login"} className="mga-glass-panel" style={{ width: "100%", maxWidth: 420, padding: "40px 36px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="mga-stagger-item" style={stagger(0)}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, rgba(93,211,196,0.35), rgba(179,157,219,0.35))", border: "1px solid rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18, boxShadow: "0 0 24px rgba(93,211,196,0.25)" }}>
+            <ShieldCheck size={26} color="#F1F5F9" strokeWidth={1.8} />
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#F8FAFC", marginBottom: 4 }}>
+            {isSignup ? "Create your account" : "Welcome back"}
+          </div>
+          <div style={{ fontSize: 12.5, color: "rgba(241,245,249,0.6)" }}>
+            {isSignup ? "Mind Guard AI — takes less than a minute." : "Your AI companion missed you."}
           </div>
         </div>
-        <div
-          className="mga-scroll"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: isSignup ? "flex-start" : "center",
-            alignItems: "center",
-            padding: isSignup ? "70px 40px 50px" : 40,
-            position: "relative",
-            overflowY: "auto",
-            maxHeight: "100vh",
-          }}
-        >
-          <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            style={{ position: "absolute", top: 20, right: 20, width: 34, height: 34, borderRadius: 999, border: `1px solid ${t.border}`, background: t.inputBg, color: t.textSecondary, cursor: "pointer" }}
-          >
-            {theme === "light" ? <Moon size={14} /> : <Sun size={14} />}
-          </button>
 
-          {isSignup ? (
-            <SignupWizard t={t} onCreated={finishSignup} onSwitchToLogin={() => setIsSignup(false)} />
-          ) : (
-            <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>Welcome back</div>
-              <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle(t)} aria-label="Email" />
-              <input
-                placeholder="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitLogin()}
-                style={inputStyle(t)}
-                aria-label="Password"
-              />
-              {error && <div style={{ fontSize: 11.5, color: t.coralDeep }}>{error}</div>}
-              <div style={{ fontSize: 12, color: t.lavender, textAlign: "right", fontWeight: 600, cursor: "pointer" }}>Forgot password?</div>
-              <PrimaryButton grad={t.tealGrad} shadowColor="rgba(77,182,172,0.35)" onClick={submitLogin} style={{ marginTop: 4, opacity: busy ? 0.7 : 1 }}>
-                {busy ? "Please wait…" : "Sign in"}
-              </PrimaryButton>
-              <div style={{ fontSize: 12.5, color: t.textSecondary, textAlign: "center", marginTop: 6 }}>
-                New here?{" "}
-                <span onClick={() => setIsSignup(true)} style={{ color: t.teal, fontWeight: 700, cursor: "pointer" }}>
-                  Sign up
-                </span>
+        {/* Sliding tab switch */}
+        <div className="mga-tab-switch mga-stagger-item" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", ...stagger(1) }}>
+          <div className="mga-tab-pill" style={{ left: isSignup ? "50%" : "4px", width: "calc(50% - 4px)", background: "linear-gradient(135deg,#5FD1C4,#8A6FC0)", boxShadow: "0 0 16px rgba(93,211,196,0.35)" }} />
+          <button type="button" className="mga-tab-btn" style={{ color: !isSignup ? "#08231D" : "rgba(241,245,249,0.7)" }} onClick={() => setIsSignup(false)}>
+            Sign in
+          </button>
+          <button type="button" className="mga-tab-btn" style={{ color: isSignup ? "#08231D" : "rgba(241,245,249,0.7)" }} onClick={() => setIsSignup(true)}>
+            Sign up
+          </button>
+        </div>
+
+        {isSignup && (
+          <div className="mga-input-wrap mga-stagger-item" style={stagger(2)}>
+            <User size={15} className="mga-input-icon" color="rgba(241,245,249,0.45)" />
+            <input
+              className={`mga-input-el mga-neon-input ${shakeField === "name" ? "mga-input-error" : ""}`}
+              placeholder="Full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => markTouched("name")}
+              style={fieldStyle("name", nameValid)}
+            />
+            {touched.name && nameValid && <CheckCircle2 size={15} className="mga-input-check" color="#5FD1C4" />}
+          </div>
+        )}
+
+        <div className="mga-stagger-item" style={stagger(3)}>
+          <div className="mga-input-wrap">
+            <Mail size={15} className="mga-input-icon" color="rgba(241,245,249,0.45)" />
+            <input
+              className={`mga-input-el mga-neon-input ${shakeField === "email" ? "mga-input-error" : ""}`}
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => markTouched("email")}
+              style={fieldStyle("email", emailValid)}
+            />
+            {touched.email && emailValid && <CheckCircle2 size={15} className="mga-input-check" color="#5FD1C4" />}
+          </div>
+          {touched.email && !emailValid && (
+            <div style={{ fontSize: 11, color: "#FF9A90", marginTop: 5 }}>Enter a valid email address</div>
+          )}
+        </div>
+
+        <div className="mga-stagger-item" style={stagger(4)}>
+          <div className="mga-input-wrap">
+            <Lock size={15} className="mga-input-icon" color="rgba(241,245,249,0.45)" />
+            <input
+              className={`mga-input-el mga-neon-input ${shakeField === "password" ? "mga-input-error" : ""}`}
+              placeholder="Password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => markTouched("password")}
+              onKeyDown={(e) => e.key === "Enter" && submit()}
+              style={fieldStyle("password", passwordValid)}
+            />
+            <button type="button" className="mga-eye-btn" style={{ color: "rgba(241,245,249,0.5)" }} onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}>
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+          {touched.password && !passwordValid && (
+            <div style={{ fontSize: 11, color: "#FF9A90", marginTop: 5 }}>At least 6 characters</div>
+          )}
+          {isSignup && password && (
+            <div style={{ marginTop: 9 }}>
+              <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i < strength ? strengthMeta.color : "rgba(255,255,255,0.12)", boxShadow: i < strength ? `0 0 8px ${strengthMeta.color}` : "none", transition: "background 0.2s ease" }} />
+                ))}
               </div>
+              <div style={{ fontSize: 10.5, color: strengthMeta.color, fontWeight: 600 }}>{strengthMeta.label}</div>
             </div>
           )}
+        </div>
+
+        {error && (
+          <div className="mga-shake" style={{ fontSize: 11.5, color: "#FF9A90", background: "rgba(255,138,128,0.1)", border: "1px solid rgba(255,138,128,0.3)", borderRadius: 12, padding: "9px 11px", display: "flex", alignItems: "center", gap: 6 }}>
+            <AlertCircle size={13} /> {error}
+          </div>
+        )}
+
+        {!isSignup && (
+          <div className="mga-stagger-item" style={{ fontSize: 12, color: "#C4B5EE", textAlign: "right", fontWeight: 600, cursor: "pointer", ...stagger(5) }}>
+            Forgot password?
+          </div>
+        )}
+
+        <MagneticGlowButton
+          onClick={submit}
+          disabled={busy}
+          style={{ marginTop: 4 }}
+        >
+          {busy && <span className="mga-spinner" style={{ borderTopColor: "#06231D", borderColor: "rgba(6,35,29,0.35)" }} />}
+          {busy ? "Please wait…" : isSignup ? "Create account" : "Sign in"}
+        </MagneticGlowButton>
+
+        <div className="mga-stagger-item" style={{ fontSize: 12.5, color: "rgba(241,245,249,0.6)", textAlign: "center", marginTop: 2, ...stagger(7) }}>
+          {isSignup ? "Already have an account? " : "New here? "}
+          <span
+            onClick={() => {
+              setIsSignup((v) => !v);
+              setError("");
+              setTouched({});
+            }}
+            style={{ color: "#5FD1C4", fontWeight: 700, cursor: "pointer" }}
+          >
+            {isSignup ? "Sign in" : "Sign up"}
+          </span>
         </div>
       </div>
     </div>
   );
 }
+
 
 /* ---------------------------------------------------------------------- */
 /*  HOME DASHBOARD                                                        */
