@@ -13,4 +13,15 @@ db.journals.createIndex({ user_id: 1, created_at: -1 });
 db.createCollection("contacts");
 db.contacts.createIndex({ user_id: 1 });
 
+// --- Admin / Counselor analytics dashboard ---
+db.createCollection("broadcasts");
+db.broadcasts.createIndex({ created_at: -1 });
+
+db.createCollection("audit_logs");
+db.audit_logs.createIndex({ created_at: -1 });
+
+db.createCollection("engagement_events");
+db.engagement_events.createIndex({ created_at: -1 });
+db.engagement_events.createIndex({ alert_type: 1 });
+
 print("mindguard: collections + indexes ready");

@@ -1,7 +1,7 @@
 import time
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Header, HTTPException
+from fastapi import Depends, Header, HTTPException
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 
@@ -41,3 +41,19 @@ async def get_current_user(authorization: str = Header(default="")):
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user
+
+
+def require_role(*allowed_roles: str):
+    """Route-guard dependency factory — e.g. `Depends(require_role("admin", "counselor"))`.
+
+    Rejects any caller whose stored role isn't in `allowed_roles` with a 403
+    *after* `get_current_user` has already verified the bearer token, so a
+    valid student token is authenticated but still forbidden from touching
+    admin/counselor-only aggregate endpoints.
+    """
+    async def checker(user=Depends(get_current_user)):
+        role = user.get("role", "student")
+        if role not in allowed_roles:
+            raise HTTPException(status_code=403, detail="This action requires admin or counselor access.")
+        return user
+    return checker
