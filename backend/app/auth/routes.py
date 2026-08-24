@@ -30,6 +30,11 @@ async def signup(body: SignupRequest):
         "profile": profile,
         # Step 4 — check-in preference + consent acknowledgements
         "preferences": preferences,
+        # Every self-serve signup is a student. Counselor/admin accounts
+        # are provisioned directly in the database (see
+        # backend/scripts/seed_admin_dashboard.py) — there is no field on
+        # SignupRequest that can set this to anything else.
+        "role": "student",
     })
 
     # Step 3 — support network. Stored in the shared `contacts` collection
@@ -76,4 +81,5 @@ async def me(user=Depends(get_current_user)):
         preferred_name=profile.get("preferred_name"),
         institution=profile.get("institution"),
         checkin_time=preferences.get("checkin_time"),
+        role=user.get("role", "student"),
     )

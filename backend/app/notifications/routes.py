@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 
 from fastapi import APIRouter
 
@@ -6,7 +7,7 @@ from app.config import (
     COUNSELOR_PHONE_NUMBER, NOTIFICATIONS_DRY_RUN,
     TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER,
 )
-from app.database import contacts
+from app.database import contacts, engagement_events
 from app.notifications.models import AlertRequest, AlertResponse, TrustedContact
 
 logger = logging.getLogger("notifications")
@@ -25,8 +26,20 @@ def send_sms(to_number: str, body: str) -> dict:
     return {"sid": msg.sid, "status": msg.status}
 
 
+async def _log_engagement(alert_type: str):
+    """Feeds the admin dashboard's 'Counselor Resource Utilization' metric.
+    Deliberately stores only a type + timestamp — no user_id, no name — so
+    support-engagement volume can be counted without ever being traceable
+    back to which student reached out."""
+    await engagement_events.insert_one({
+        "alert_type": alert_type,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
 @router.post("/emergency/alert", response_model=AlertResponse)
 async def emergency_alert(body: AlertRequest):
+    await _log_engagement(body.alert_type)
     text = body.message or f"{body.user_name} has requested support through Mind Guard AI. Please reach out."
 
     if body.alert_type == "helpline":

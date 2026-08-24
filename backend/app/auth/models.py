@@ -60,3 +60,9 @@ class UserOut(BaseModel):
     preferred_name: Optional[str] = None
     institution: Optional[str] = None
     checkin_time: Optional[str] = None
+    # "student" (default, self-serve signup) | "counselor" | "admin".
+    # There is no public API path that lets a caller set this to anything
+    # other than "student" — counselor/admin accounts are provisioned out
+    # of band (see backend/scripts/seed_admin_dashboard.py) so the
+    # aggregate analytics dashboard can't be reached by signing up.
+    role: Literal["student", "counselor", "admin"] = "student"

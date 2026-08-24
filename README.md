@@ -65,9 +65,70 @@ uvicorn app.main:app --reload --port 8000
 | POST | `/api/ai/chat` | ai | AI chatbot reply + mood/rumination score |
 | POST | `/api/ai/analyze-journal` | ai | sentiment/overthinking analysis of a journal entry |
 | POST | `/api/emergency/alert` | notifications | trigger SMS to counselor/trusted contact |
+| GET | `/api/admin/aggregate-stats?period=` | admin | KPI banner + risk-tier distribution + anomaly alerts |
+| GET | `/api/admin/cohort-trends?period=` | admin | daily campus mood trendline |
+| GET | `/api/admin/department-breakdown?period=&group_by=` | admin | distress severity by department/year, k-anonymized |
+| GET | `/api/admin/stress-factors?period=` | admin | top reported stress-factor tags, k-anonymized |
+| GET | `/api/admin/resource-utilization?period=` | admin | helpline/counselor/trusted-contact tap counts |
+| POST | `/api/admin/broadcast-resource` | admin | publish an anonymized cohort-wide wellness nudge |
+| GET | `/api/admin/broadcast-resource` | admin | list recent broadcasts |
+| GET | `/api/admin/export/summary.csv?period=` | admin | zero-PII CSV for accreditation reporting |
+| GET | `/api/admin/audit-log` | admin (admin role only) | who queried what analytics, and when |
 
 Full request/response shapes are in `backend/README.md` and the
 auto-generated docs at `/docs`.
+
+## Admin & Counselor Analytics Dashboard
+
+A second, separately-authenticated surface for counselors/admins to see
+**cohort-level, k-anonymized** wellness metrics — never an individual
+student's name, journal text, or contacts.
+
+```bash
+cd frontend && npm run dev
+# student app:  http://localhost:5173/index.html
+# admin dashboard: http://localhost:5173/admin.html
+```
+
+**Seeding demo data** (mock students + journal history + a counselor
+and an admin login, so the dashboard has something to show immediately):
+
+```bash
+cd backend
+python -m scripts.seed_admin_dashboard
+```
+
+This prints two logins:
+
+| Role | Email | Password |
+|---|---|---|
+| Counselor | `counselor@mindguard.ai` | `Counselor@123` |
+| Admin | `admin@mindguard.ai` | `Admin@123456` |
+
+Sign in with either at `/admin.html` — there is deliberately no
+self-serve signup for these roles (see `backend/app/auth/routes.py`);
+every account created through `/api/auth/signup` is a student.
+
+### Privacy-by-design, concretely
+
+- **Zero-PII payloads.** Every `backend/app/admin/*` endpoint only ever
+  runs `$group` / `$bucket` / `$facet` / `$avg` Mongo pipelines. No admin
+  route imports `journals.find_one` or returns a raw document — see the
+  module docstring in `app/admin/aggregation.py`.
+- **K-anonymity (K=5, configurable via `K_ANONYMITY_THRESHOLD`).** Any
+  department/year bucket or stress-factor tag backed by fewer than 5
+  students is folded into "Other / Insufficient Data" or hidden
+  entirely (`app/admin/aggregation.py::suppress_small_groups`).
+- **RBAC.** `require_role("admin", "counselor")` in `app/auth/utils.py`
+  gates every `/api/admin/*` route; a valid student JWT gets a 403.
+- **Audit trail.** Every aggregate query an admin/counselor makes is
+  logged (actor, endpoint, params, timestamp) to `audit_logs` —
+  `GET /api/admin/audit-log` (admin-only) reviews it.
+- **Anonymous engagement counters.** Crisis-helpline/counselor/trusted-
+  contact taps are logged to `engagement_events` with *no user_id at
+  all* — see `_log_engagement` in `app/notifications/routes.py` — so
+  "Resource Utilization" can be counted without being traceable to a
+  student even by someone with direct DB access.
 
 ## Environment variables
 

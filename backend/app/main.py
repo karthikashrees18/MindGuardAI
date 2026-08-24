@@ -13,6 +13,7 @@ from app.auth.routes import router as auth_router
 from app.journal.routes import router as journal_router
 from app.ai.routes import router as ai_router
 from app.notifications.routes import router as notifications_router
+from app.admin.routes import router as admin_router
 
 app = FastAPI(title="Mind Guard AI — Backend")
 
@@ -27,6 +28,7 @@ app.include_router(auth_router)
 app.include_router(journal_router)
 app.include_router(ai_router)
 app.include_router(notifications_router)
+app.include_router(admin_router)
 
 
 @app.get("/health")
