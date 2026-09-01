@@ -1573,13 +1573,107 @@ function SuggestionCard({ t, icon: Icon, iconColor, bg, label, labelColor, desc,
   );
 }
 
-function SuggestionsPage({ t, go }) {
+function MusicSuggestionCard({ t, mood }) {
+  const [state, setState] = useState("idle"); // idle | loading | loaded | error
+  const [data, setData] = useState(null);
+
+  const handlePlay = async () => {
+    if (state === "loading") return;
+    setState("loading");
+    try {
+      const res = await api.getPlaylist(mood);
+      setData(res);
+      setState("loaded");
+    } catch (e) {
+      setState("error");
+    }
+  };
+
+  const top = data?.playlists?.[0];
+
+  return (
+    <Card t={t} style={{ background: t.lavenderSoft, border: "none", display: "flex", flexDirection: "column", gap: 10, gridColumn: state === "loaded" ? "1 / -1" : undefined }}>
+      <Music size={22} color={t.lavenderDeep} />
+      <div style={{ fontSize: 13.5, fontWeight: 700, color: t.textPrimary }}>Calming music</div>
+      <div style={{ fontSize: 11.5, color: t.textSecondary, flex: 1 }}>
+        {mood ? `A playlist picked for your current mood (${mood}).` : "A playlist picked for your current mood."}
+      </div>
+
+      {state !== "loaded" && (
+        <button
+          onClick={handlePlay}
+          disabled={state === "loading"}
+          style={{
+            alignSelf: "flex-start", fontSize: 11.5, padding: "7px 16px", borderRadius: 10,
+            border: "none", background: t.lavender, color: "#fff", fontWeight: 700,
+            cursor: state === "loading" ? "default" : "pointer", opacity: state === "loading" ? 0.7 : 1,
+          }}
+        >
+          {state === "loading" ? "Finding tracks…" : state === "error" ? "Try again" : "Play"}
+        </button>
+      )}
+
+      {state === "error" && (
+        <div style={{ fontSize: 11, color: t.coralDeep }}>Couldn't reach Spotify — please try again.</div>
+      )}
+
+      {state === "loaded" && top && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {top.embed_url ? (
+            <iframe
+              title="Spotify playlist"
+              src={top.embed_url}
+              width="100%"
+              height="152"
+              style={{ borderRadius: 12, border: "none" }}
+              allow="autoplay; encrypted-media; clipboard-write; fullscreen; picture-in-picture"
+              loading="lazy"
+            />
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, background: t.surface, borderRadius: 12, padding: 12 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 10, background: t.lavenderSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Music size={20} color={t.lavenderDeep} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: t.textPrimary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {top.name}
+                </div>
+                <div style={{ fontSize: 11, color: t.textSecondary }}>{top.description}</div>
+              </div>
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 10 }}>
+            {top.external_url && (
+              <a
+                href={top.external_url}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: 11.5, padding: "7px 16px", borderRadius: 10, background: t.lavender, color: "#fff", fontWeight: 700, textDecoration: "none" }}
+              >
+                Open in Spotify
+              </a>
+            )}
+            <button
+              onClick={handlePlay}
+              style={{ fontSize: 11.5, padding: "7px 16px", borderRadius: 10, border: `1px solid ${t.border}`, background: "transparent", color: t.textPrimary, fontWeight: 600, cursor: "pointer" }}
+            >
+              Shuffle pick
+            </button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function SuggestionsPage({ t, go, liveSignal }) {
+  const mood = liveSignal?.mood;
   return (
     <div className="mga-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
       <SuggestionCard t={t} icon={PauseCircle} iconColor={t.tealDeep} bg={t.tealSoft} label="5-min break" desc="A short pause to reset before your next task." cta="Start" ctaBg={t.teal} />
       <SuggestionCard t={t} icon={Wind} iconColor={t.lavenderDeep} bg={t.lavenderSoft} label="Deep breathing" desc="Guided breathing to calm a racing mind." cta="Start" ctaBg={t.lavender} />
       <SuggestionCard t={t} icon={Waves} iconColor={t.tealDeep} bg={t.tealSoft} label="Meditation" desc="A 10-minute guided session for focus." cta="Start" ctaBg={t.teal} />
-      <SuggestionCard t={t} icon={Music} iconColor={t.lavenderDeep} bg={t.lavenderSoft} label="Calming music" desc="A playlist picked for your current mood." cta="Play" ctaBg={t.lavender} />
+      <MusicSuggestionCard t={t} mood={mood} />
       <SuggestionCard
         t={t}
         icon={AlertCircle}

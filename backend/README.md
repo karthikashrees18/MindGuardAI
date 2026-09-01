@@ -70,6 +70,8 @@ shows up there together.
 | POST | `/api/emergency/alert` | notifications |
 | POST | `/api/contacts` | notifications |
 | GET | `/api/contacts?user_id=` | notifications |
+| POST | `/api/music/playlist` | music |
+| GET | `/api/music/health` | music |
 | GET | `/health` | — |
 
 ## Notes

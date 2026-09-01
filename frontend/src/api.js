@@ -49,6 +49,10 @@ export const api = {
   analyzeJournal: (text, mood, stress_level) =>
     request("/api/ai/analyze-journal", { method: "POST", body: JSON.stringify({ text, mood, stress_level }) }),
 
+  // music-service
+  getPlaylist: (mood) =>
+    request("/api/music/playlist", { method: "POST", body: JSON.stringify({ mood }) }),
+
   // journal-service
   createJournal: (entry) => request("/api/journals", { method: "POST", body: JSON.stringify(entry) }),
   listJournals: (userId) => request(`/api/journals?user_id=${encodeURIComponent(userId)}`),
