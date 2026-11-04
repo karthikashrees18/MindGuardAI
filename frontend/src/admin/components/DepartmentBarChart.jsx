@@ -1,6 +1,6 @@
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Card, GhostButton, CHART_COLORS, TIER_LABELS } from "../theme";
+import { Card, GhostButton, CHART_COLORS, TIER_LABELS, CHART, tooltipStyles } from "../theme";
 
 export default function DepartmentBarChart({ t, buckets, kThreshold, groupBy, setGroupBy }) {
   const data = (buckets || []).map((b) => ({
@@ -14,7 +14,7 @@ export default function DepartmentBarChart({ t, buckets, kThreshold, groupBy, se
   }));
 
   return (
-    <Card t={t}>
+    <Card>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, flexWrap: "wrap", gap: 8 }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary }}>
@@ -33,11 +33,11 @@ export default function DepartmentBarChart({ t, buckets, kThreshold, groupBy, se
         <div style={{ width: "100%", height: Math.max(220, data.length * 46) }}>
           <ResponsiveContainer>
             <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16, top: 10, bottom: 0 }}>
-              <CartesianGrid stroke={t.border} strokeDasharray="4 4" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 10, fill: t.textFaint }} axisLine={{ stroke: t.border }} tickLine={false} />
-              <YAxis type="category" dataKey="label" width={110} tick={{ fontSize: 11, fill: t.textPrimary }} axisLine={false} tickLine={false} />
+              <CartesianGrid stroke={CHART.grid} strokeDasharray="4 4" horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 10, fill: CHART.axis }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+              <YAxis type="category" dataKey="label" width={110} tick={{ fontSize: 11, fill: CHART.text }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, fontSize: 12 }}
+                {...tooltipStyles}
                 formatter={(value, name) => [value, TIER_LABELS[name] || name]}
               />
               <Bar dataKey="normal" stackId="a" fill={CHART_COLORS.normal} radius={[0, 0, 0, 0]} />

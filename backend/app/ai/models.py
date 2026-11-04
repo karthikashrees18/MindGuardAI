@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal
+from typing import Any, List, Optional, Literal
 from pydantic import BaseModel
 
 
@@ -21,6 +21,17 @@ class AnalysisResult(BaseModel):
     overthinking_percent: Optional[int] = None
     anxiety_risk: Optional[str] = None
     summary: Optional[str] = None
+    # --- additive fields from the two-engine pipeline ---
+    sentiment: Optional[float] = None
+    stress_intensity: Optional[int] = None
+    category: Optional[dict] = None
+    markers: Optional[dict] = None
+    factors: Optional[List[dict]] = None
+    crisis: Optional[bool] = None
+    engine: Optional[str] = None
+    # chat only: set when this message pushed the student over an escalation rule
+    early_warning: Optional[bool] = None
+    interventions: Optional[List[Any]] = None
 
 
 class JournalAnalyzeRequest(BaseModel):

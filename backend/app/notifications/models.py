@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 
 class AlertRequest(BaseModel):
-    user_id: str
+    user_id: str = ""  # ignored — the server uses the authenticated student
     user_name: Optional[str] = "A student"
     alert_type: Literal["helpline", "counselor", "trusted_contact"]
     message: Optional[str] = None

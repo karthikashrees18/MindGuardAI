@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
-  Users, HeartPulse, TrendingUp, ClipboardCheck, Megaphone,
-  Download, ShieldCheck, PhoneCall, Stethoscope, UsersRound,
+  Users, HeartPulse, TrendingUp, ClipboardCheck,
+  ShieldCheck, PhoneCall, Stethoscope, UsersRound,
 } from "lucide-react";
-import { Card, GhostButton, PrimaryButton } from "./theme";
+import { Card, GhostButton } from "./theme";
 import { adminApi } from "./api";
 
 import MetricCard from "./components/MetricCard";
@@ -20,8 +20,7 @@ const PERIODS = [
   { key: "semester", label: "Semester-to-date" },
 ];
 
-export default function AdminDashboard({ t, actor, onLogout }) {
-  const [period, setPeriod] = useState("7d");
+export default function AdminDashboard({ t, period, setPeriod, showBroadcastModal, setShowBroadcastModal }) {
   const [groupBy, setGroupBy] = useState("department");
 
   const [stats, setStats] = useState(null);
@@ -33,7 +32,6 @@ export default function AdminDashboard({ t, actor, onLogout }) {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [broadcastStatus, setBroadcastStatus] = useState("");
 
   useEffect(() => {
@@ -83,36 +81,10 @@ export default function AdminDashboard({ t, actor, onLogout }) {
   const kpis = stats?.kpis;
 
   return (
-    <div style={{ minHeight: "100vh", background: t.page }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "28px 28px 60px" }}>
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14, marginBottom: 18 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: t.tealGrad, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <ShieldCheck size={20} color="#fff" />
-            </div>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: t.textPrimary }}>Cohort Wellness Analytics</div>
-              <div style={{ fontSize: 12, color: t.textSecondary }}>Signed in as {actor?.name} · {actor?.role}</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <a href={adminApi.exportSummaryCsvUrl(period)} style={{ textDecoration: "none" }}>
-              <GhostButton t={t}>
-                <Download size={14} /> Export CSV
-              </GhostButton>
-            </a>
-            <PrimaryButton grad={t.lavenderGrad} shadowColor="rgba(179,157,219,0.4)" onClick={() => setShowBroadcastModal(true)}>
-              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Megaphone size={15} /> New broadcast
-              </span>
-            </PrimaryButton>
-            <GhostButton t={t} onClick={onLogout}>Log out</GhostButton>
-          </div>
-        </div>
-
+    <div>
+      <div>
         {/* Privacy badge */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, background: t.tealSoft, border: `1px solid ${t.teal}33`, borderRadius: 14, padding: "12px 16px", marginBottom: 18, fontSize: 12, color: t.tealDeep, fontWeight: 600 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, background: t.tealSoft, border: "1px solid var(--border)", borderRadius: 14, padding: "12px 16px", marginBottom: 18, fontSize: 12, color: t.teal, fontWeight: 600 }}>
           <ShieldCheck size={16} style={{ flexShrink: 0 }} />
           Privacy Protected: end-to-end k-anonymized aggregate metrics. Individual student identities and personal journals are mathematically redacted.
         </div>
@@ -120,7 +92,7 @@ export default function AdminDashboard({ t, actor, onLogout }) {
         {/* Time filter bar */}
         <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
           {PERIODS.map((p) => (
-            <GhostButton key={p.key} t={t} active={period === p.key} onClick={() => setPeriod(p.key)}>
+            <GhostButton key={p.key} active={period === p.key} onClick={() => setPeriod(p.key)}>
               {p.label}
             </GhostButton>
           ))}
@@ -141,7 +113,7 @@ export default function AdminDashboard({ t, actor, onLogout }) {
         )}
 
         {/* KPI banner */}
-        <div className="mga-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 18 }}>
+        <div className="mga-grid-4" style={{ marginBottom: 18 }}>
           <MetricCard
             t={t} icon={Users} iconColor={t.tealDeep} iconBg={t.tealSoft}
             label="Active enrolled students" value={loading ? "—" : kpis?.total_active_students ?? "—"}
@@ -186,7 +158,7 @@ export default function AdminDashboard({ t, actor, onLogout }) {
 
         {/* Resource utilization + recent broadcasts */}
         <div id="resource-utilization" className="mga-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 16, scrollMarginTop: 20 }}>
-          <Card t={t}>
+          <Card>
             <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, marginBottom: 14 }}>
               Counselor resource utilization
             </div>
@@ -197,7 +169,7 @@ export default function AdminDashboard({ t, actor, onLogout }) {
             </div>
           </Card>
 
-          <Card t={t}>
+          <Card>
             <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, marginBottom: 14 }}>
               Recent broadcasts
             </div>
@@ -230,8 +202,8 @@ export default function AdminDashboard({ t, actor, onLogout }) {
 function UtilRow({ t, icon: Icon, label, value, color, bg }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      <div style={{ width: 34, height: 34, borderRadius: 10, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon size={16} color={color} />
+      <div style={{ width: 34, height: 34, borderRadius: 10, background: bg, color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Icon size={16} />
       </div>
       <div style={{ flex: 1, fontSize: 12.5, color: t.textPrimary }}>{label}</div>
       <div style={{ fontSize: 16, fontWeight: 700, color: t.textPrimary }}>{value ?? "—"}</div>

@@ -1,14 +1,17 @@
 import React, { useState } from "react";
-import { ShieldCheck } from "lucide-react";
-import { PrimaryButton, inputStyle } from "./theme";
+import { ShieldCheck, Sparkles } from "lucide-react";
+import { Button, Field } from "../components/ui";
 
-export default function AdminLogin({ t, onLogin }) {
+export default function AdminLogin({ onLogin, onDemoLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [demoOffered, setDemoOffered] = useState(true); // hidden if the backend reports demo mode off
 
-  async function submit() {
+  async function submit(e) {
+    e?.preventDefault();
     setError("");
     setBusy(true);
     try {
@@ -20,41 +23,52 @@ export default function AdminLogin({ t, onLogin }) {
     }
   }
 
+  async function demo() {
+    setError("");
+    setDemoBusy(true);
+    try {
+      await onDemoLogin();
+    } catch (err) {
+      if (err.status === 404) setDemoOffered(false);
+      else setError(err.message || "Demo login failed — is the backend running?");
+    } finally {
+      setDemoBusy(false);
+    }
+  }
+
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: t.heroGrad, padding: 20 }}>
-      <div style={{ width: "100%", maxWidth: 380, background: t.surface, borderRadius: 20, padding: 32, boxShadow: t.shadow }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 22 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 16, background: t.tealGrad, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ShieldCheck size={26} color="#fff" />
+    <div className="mg-center-page">
+      <div className="mg-glass-panel mg-fade-up" style={{ width: "100%", maxWidth: 400 }}>
+        <div className="mg-stack-sm" style={{ alignItems: "center", marginBottom: 20, textAlign: "center" }}>
+          <div className="mg-hero-orb" style={{ width: 60, height: 60, borderRadius: 19 }}>
+            <ShieldCheck size={28} color="#fff" />
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: t.textPrimary }}>Mind Guard AI</div>
-          <div style={{ fontSize: 12.5, color: t.textSecondary, textAlign: "center" }}>Admin & Counselor Analytics Dashboard</div>
+          <div className="mg-h2">Mind Guard AI</div>
+          <div className="mg-small mg-muted">Counselor portal and cohort analytics</div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <input
-            placeholder="Work email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={inputStyle(t)}
-            aria-label="Email"
-          />
-          <input
-            placeholder="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submit()}
-            style={inputStyle(t)}
-            aria-label="Password"
-          />
-          {error && <div style={{ fontSize: 11.5, color: t.coralDeep }}>{error}</div>}
-          <PrimaryButton grad={t.tealGrad} shadowColor="rgba(77,182,172,0.35)" onClick={submit} disabled={busy}>
-            {busy ? "Signing in…" : "Sign in"}
-          </PrimaryButton>
-        </div>
+        <form className="mg-stack-sm" onSubmit={submit}>
+          <Field label="Work email">
+            <input className="mg-input" type="email" autoComplete="username" placeholder="you@university.edu" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </Field>
+          <Field label="Password" error={error}>
+            <input className="mg-input" type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </Field>
+          <Button type="submit" block loading={busy}>Sign in</Button>
+        </form>
 
-        <div style={{ fontSize: 11, color: t.textFaint, textAlign: "center", marginTop: 18, lineHeight: 1.5 }}>
+        {demoOffered && (
+          <div style={{ marginTop: 14 }}>
+            <Button variant="ghost" block icon={Sparkles} loading={demoBusy} onClick={demo} type="button">
+              Use demo counselor login
+            </Button>
+            <div className="mg-tiny mg-faint" style={{ textAlign: "center", marginTop: 8 }}>
+              Seeded account: counselor@mindguard.ai / Counselor@123
+            </div>
+          </div>
+        )}
+
+        <div className="mg-tiny mg-faint" style={{ textAlign: "center", marginTop: 18, lineHeight: 1.5 }}>
           Access is restricted to counselor and admin accounts. Student accounts cannot sign in here.
         </div>
       </div>

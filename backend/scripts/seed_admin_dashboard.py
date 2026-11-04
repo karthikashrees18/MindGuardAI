@@ -18,6 +18,7 @@ Safe to re-run: it skips creating an account if the email already exists,
 but always adds a fresh batch of journal entries.
 """
 import asyncio
+import functools
 import random
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -66,6 +67,12 @@ def tier_of(score: int) -> str:
     return "High"
 
 
+@functools.lru_cache(maxsize=8)
+def _hash_once(password: str) -> str:
+    # bcrypt is deliberately slow; mock students share one password, so hash it once.
+    return hash_password(password)
+
+
 async def ensure_account(email: str, name: str, password: str, role: str, profile: dict) -> str:
     existing = await users.find_one({"email": email})
     if existing:
@@ -75,7 +82,7 @@ async def ensure_account(email: str, name: str, password: str, role: str, profil
         "_id": user_id,
         "name": name,
         "email": email,
-        "password_hash": hash_password(password),
+        "password_hash": _hash_once(password),
         "created_at": datetime.now(timezone.utc).isoformat(),
         "profile": profile,
         "preferences": {"checkin_time": "morning", "privacy_consent": True, "crisis_consent": True},

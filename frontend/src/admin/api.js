@@ -1,7 +1,7 @@
 // Same pattern as ../api.js — one place for base URL + auth header, this
 // time for the admin/counselor-only endpoints under /api/admin/*.
 
-export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+export const API_BASE = (import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? "http://localhost:8000" : "")).replace(/\/$/, "");
 
 function authHeaders() {
   const token = localStorage.getItem("mga_admin_token");
@@ -25,7 +25,9 @@ async function request(path, options = {}) {
     } catch (_) {
       /* ignore */
     }
-    throw new Error(detail);
+    const err = new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    err.status = res.status;
+    throw err;
   }
   if (res.status === 204) return null;
   return res.json();
@@ -37,6 +39,9 @@ export const adminApi = {
   login: (email, password) =>
     request("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   me: () => request("/api/auth/me"),
+  // Presentation shortcut; 404 when the backend runs with demo mode off.
+  demoLogin: () =>
+    request("/api/demo/login", { method: "POST", body: JSON.stringify({ persona: "counselor" }) }),
 
   // admin-service
   aggregateStats: (period) => request(`/api/admin/aggregate-stats?period=${period}`),
@@ -49,6 +54,17 @@ export const adminApi = {
   createBroadcast: (payload) =>
     request("/api/admin/broadcast-resource", { method: "POST", body: JSON.stringify(payload) }),
   exportSummaryCsvUrl: (period) => `${API_BASE}/api/admin/export/summary.csv?period=${period}`,
+};
+
+export const counselorApi = {
+  summary: () => request("/api/counselor/summary"),
+  cases: (risk) => request(`/api/counselor/cases${risk ? `?risk=${encodeURIComponent(risk)}` : ""}`),
+  caseDetail: (alias) => request(`/api/counselor/cases/${encodeURIComponent(alias)}`),
+  action: (alias, body) =>
+    request(`/api/counselor/cases/${encodeURIComponent(alias)}/actions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
 
 export function saveAdminToken(token) {

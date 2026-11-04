@@ -9,7 +9,7 @@ JWT_ALGO = "HS256"
 JWT_EXPIRES_MINUTES = 60 * 24 * 7  # 1 week
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-ANTHROPIC_MODEL = "claude-sonnet-4-6"
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5-5")
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
@@ -21,7 +21,24 @@ TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
 COUNSELOR_PHONE_NUMBER = os.getenv("COUNSELOR_PHONE_NUMBER", "")
 NOTIFICATIONS_DRY_RUN = not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_FROM_NUMBER)
 
+# Comma-separated list of browser origins allowed to call the API, e.g.
+# "https://mindguard.vercel.app,https://mindguard-admin.vercel.app".
+# "*" (default, for local dev) allows any origin.
+ALLOWED_ORIGINS = [o.strip().rstrip("/") for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
+
 # --- Admin / Counselor analytics dashboard -----------------------------
 K_ANONYMITY_THRESHOLD = int(os.getenv("K_ANONYMITY_THRESHOLD", "5"))
 
 ANOMALY_CHANGE_THRESHOLD_PERCENT = float(os.getenv("ANOMALY_CHANGE_THRESHOLD_PERCENT", "20"))
+
+# --- Presentation / demo mode ---------------------------------------------
+# When on (default), the backend seeds counselor/admin logins, a cohort of
+# mock students, and two demo personas on startup, and exposes
+# /api/demo/* so the UI can switch persona with one click. Turn off in
+# production: DEMO_MODE=0
+DEMO_MODE = os.getenv("DEMO_MODE", "1").lower() not in ("0", "false", "no", "")
+
+# --- Escalation thresholds (rumination score, 0-100) -------------------------
+SCORE_CALM_MAX = 40       # 0-40   Normal / Calm
+SCORE_MILD_MAX = 70       # 41-70  Mild Overthinking
+                          # 71-100 Critical / High Distress

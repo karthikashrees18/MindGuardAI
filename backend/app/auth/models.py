@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -32,6 +32,28 @@ class WellnessPreferences(BaseModel):
     crisis_consent: bool = False
 
 
+Trigger = Literal["exam_pressure", "deadlines", "low_marks", "public_speaking", "social_conflict"]
+Recovery = Literal["lt_1h", "few_hours", "full_day", "multiple_days"]
+Coping = Literal["music", "breathing", "mini_games", "journaling"]
+
+
+class BaselineProfile(BaseModel):
+    """Onboarding — baseline psychological profile. Feeds Engine 2
+    (app/engine/rumination.py) and the intervention ordering."""
+    triggers: List[Trigger] = []
+    recovery: Optional[Recovery] = None
+    coping: List[Coping] = []
+
+
+class MusicPreferences(BaseModel):
+    """Onboarding — personalised music. `playlists` maps a target emotional
+    state to a Spotify playlist URL/URI the student pasted; those embed first
+    when that state is triggered."""
+    genres: List[Literal["lofi", "classical", "ambient", "indie", "pop"]] = []
+    languages: List[str] = []
+    playlists: Dict[Literal["uplifting", "calming", "focus"], str] = {}
+
+
 class SignupRequest(BaseModel):
     name: str
     email: EmailStr
@@ -41,6 +63,15 @@ class SignupRequest(BaseModel):
     peer_contact: Optional[EmergencyContactInfo] = None
     guardian_contact: Optional[EmergencyContactInfo] = None
     preferences: Optional[WellnessPreferences] = None
+    baseline: Optional[BaselineProfile] = None
+    music: Optional[MusicPreferences] = None
+
+
+class OnboardingUpdate(BaseModel):
+    baseline: Optional[BaselineProfile] = None
+    music: Optional[MusicPreferences] = None
+    preferred_name: Optional[str] = None
+    checkin_time: Optional[Literal["morning", "evening"]] = None
 
 
 class LoginRequest(BaseModel):
@@ -66,3 +97,7 @@ class UserOut(BaseModel):
     # of band (see backend/scripts/seed_admin_dashboard.py) so the
     # aggregate analytics dashboard can't be reached by signing up.
     role: Literal["student", "counselor", "admin"] = "student"
+    baseline: Optional[BaselineProfile] = None
+    music: Optional[MusicPreferences] = None
+    onboarding_complete: bool = False
+    is_demo: bool = False

@@ -1,6 +1,6 @@
 import React from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Card } from "../theme";
+import { Card, CHART, tooltipStyles } from "../theme";
 
 export default function TrendsLineChart({ t, points }) {
   const data = (points || []).map((p) => ({
@@ -10,7 +10,7 @@ export default function TrendsLineChart({ t, points }) {
   }));
 
   return (
-    <Card t={t}>
+    <Card>
       <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>
         Longitudinal campus mood trend
       </div>
@@ -23,18 +23,17 @@ export default function TrendsLineChart({ t, points }) {
             <AreaChart data={data} margin={{ left: -18, right: 10, top: 10, bottom: 0 }}>
               <defs>
                 <linearGradient id="mgaTrendFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={t.teal} stopOpacity={0.35} />
-                  <stop offset="100%" stopColor={t.teal} stopOpacity={0} />
+                  <stop offset="0%" stopColor={CHART.teal} stopOpacity={0.35} />
+                  <stop offset="100%" stopColor={CHART.teal} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke={t.border} strokeDasharray="4 4" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: t.textFaint }} axisLine={{ stroke: t.border }} tickLine={false} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: t.textFaint }} axisLine={false} tickLine={false} width={30} />
+              <CartesianGrid stroke={CHART.grid} strokeDasharray="4 4" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: CHART.axis }} axisLine={{ stroke: CHART.grid }} tickLine={false} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: CHART.axis }} axisLine={false} tickLine={false} width={30} />
               <Tooltip
-                contentStyle={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, fontSize: 12 }}
-                labelStyle={{ color: t.textPrimary, fontWeight: 600 }}
+                {...tooltipStyles}
               />
-              <Area type="monotone" dataKey="sentiment" name="Avg. sentiment" stroke={t.tealDeep} strokeWidth={2.5} fill="url(#mgaTrendFill)" />
+              <Area type="monotone" dataKey="sentiment" name="Avg. sentiment" stroke={CHART.teal} strokeWidth={2.5} fill="url(#mgaTrendFill)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

@@ -43,6 +43,18 @@ async def get_current_user(authorization: str = Header(default="")):
     return user
 
 
+async def get_optional_user(authorization: str = Header(default="")):
+    """Like get_current_user but returns None for anonymous callers instead of
+    raising — for endpoints that personalise when a student is signed in but
+    still work without one."""
+    if not authorization.startswith("Bearer "):
+        return None
+    try:
+        return await get_current_user(authorization)
+    except HTTPException:
+        return None
+
+
 def require_role(*allowed_roles: str):
     """Route-guard dependency factory — e.g. `Depends(require_role("admin", "counselor"))`.
 
