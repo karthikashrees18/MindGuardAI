@@ -30,18 +30,18 @@ export default function BroadcastModal({ t, onClose, onSubmit }) {
   return (
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+      style={{ position: "fixed", inset: 0, background: "rgba(5,8,20,0.6)", zIndex: 100, backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
     >
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 480 }}>
-        <Card t={t} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <Card style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: t.lavenderSoft, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Megaphone size={16} color={t.lavenderDeep} />
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: t.lavenderSoft, color: t.lavenderDeep, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Megaphone size={16} />
               </div>
               <div style={{ fontSize: 15, fontWeight: 700, color: t.textPrimary }}>Publish a wellness broadcast</div>
             </div>
-            <button onClick={onClose} style={{ background: "none", border: "none", color: t.textFaint, cursor: "pointer" }}>
+            <button type="button" aria-label="Close" onClick={onClose} style={{ background: "none", border: "none", color: t.textFaint, cursor: "pointer" }}>
               <X size={18} />
             </button>
           </div>
@@ -53,7 +53,7 @@ export default function BroadcastModal({ t, onClose, onSubmit }) {
 
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, color: t.textSecondary, marginBottom: 6 }}>Target group</div>
-            <select value={targetGroup} onChange={(e) => setTargetGroup(e.target.value)} style={inputStyle(t)}>
+            <select aria-label="Target group" value={targetGroup} onChange={(e) => setTargetGroup(e.target.value)} style={inputStyle(t)}>
               {TARGET_PRESETS.map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
@@ -62,12 +62,13 @@ export default function BroadcastModal({ t, onClose, onSubmit }) {
 
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, color: t.textSecondary, marginBottom: 6 }}>Title</div>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Upcoming Exam Stress Management Workshop" style={inputStyle(t)} />
+            <input aria-label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Upcoming Exam Stress Management Workshop" style={inputStyle(t)} />
           </div>
 
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, color: t.textSecondary, marginBottom: 6 }}>Message</div>
             <textarea
+              aria-label="Message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Join us Thursday 5pm for a guided session on managing exam stress..."
@@ -78,8 +79,8 @@ export default function BroadcastModal({ t, onClose, onSubmit }) {
           {error && <div style={{ fontSize: 11.5, color: t.coralDeep }}>{error}</div>}
 
           <div style={{ display: "flex", gap: 10 }}>
-            <GhostButton t={t} onClick={onClose} style={{ flex: 1 }}>Cancel</GhostButton>
-            <PrimaryButton grad={t.lavenderGrad} shadowColor="rgba(179,157,219,0.4)" onClick={submit} disabled={busy} style={{ flex: 1 }}>
+            <GhostButton onClick={onClose} style={{ flex: 1 }}>Cancel</GhostButton>
+            <PrimaryButton grad={t.lavenderGrad} onClick={submit} disabled={busy} style={{ flex: 1 }}>
               <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 <Send size={14} /> {busy ? "Publishing…" : "Publish broadcast"}
               </span>

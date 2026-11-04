@@ -4,7 +4,10 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
 
 from app.database import users, contacts
-from app.auth.models import SignupRequest, LoginRequest, TokenResponse, UserOut
+from app.auth.models import (
+    BaselineProfile, LoginRequest, MusicPreferences, OnboardingUpdate,
+    SignupRequest, TokenResponse, UserOut,
+)
 from app.auth.utils import hash_password, verify_password, create_token, get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -30,6 +33,10 @@ async def signup(body: SignupRequest):
         "profile": profile,
         # Step 4 — check-in preference + consent acknowledgements
         "preferences": preferences,
+        # Onboarding — baseline psychological profile + music taste
+        "baseline": body.baseline.model_dump() if body.baseline else {},
+        "music": body.music.model_dump() if body.music else {},
+        "onboarding_complete": bool(body.baseline and body.baseline.recovery),
         # Every self-serve signup is a student. Counselor/admin accounts
         # are provisioned directly in the database (see
         # backend/scripts/seed_admin_dashboard.py) — there is no field on
@@ -70,10 +77,11 @@ async def login(body: LoginRequest):
     return TokenResponse(access_token=create_token(user["_id"]))
 
 
-@router.get("/me", response_model=UserOut)
-async def me(user=Depends(get_current_user)):
+def user_out(user: dict) -> UserOut:
     profile = user.get("profile") or {}
     preferences = user.get("preferences") or {}
+    baseline = user.get("baseline") or {}
+    music = user.get("music") or {}
     return UserOut(
         id=user["_id"],
         name=user["name"],
@@ -82,4 +90,33 @@ async def me(user=Depends(get_current_user)):
         institution=profile.get("institution"),
         checkin_time=preferences.get("checkin_time"),
         role=user.get("role", "student"),
+        baseline=BaselineProfile(**baseline) if baseline else None,
+        music=MusicPreferences(**music) if music else None,
+        onboarding_complete=bool(user.get("onboarding_complete")),
+        is_demo=bool(user.get("is_demo")),
     )
+
+
+@router.get("/me", response_model=UserOut)
+async def me(user=Depends(get_current_user)):
+    return user_out(user)
+
+
+@router.put("/onboarding", response_model=UserOut)
+async def update_onboarding(body: OnboardingUpdate, user=Depends(get_current_user)):
+    """Save / edit the baseline psychological profile and music preferences
+    (used by the post-signup onboarding flow and the Profile page)."""
+    updates: dict = {}
+    if body.baseline is not None:
+        updates["baseline"] = body.baseline.model_dump()
+        updates["onboarding_complete"] = bool(body.baseline.recovery)
+    if body.music is not None:
+        updates["music"] = body.music.model_dump()
+    if body.preferred_name is not None:
+        updates["profile.preferred_name"] = body.preferred_name.strip() or None
+    if body.checkin_time is not None:
+        updates["preferences.checkin_time"] = body.checkin_time
+    if updates:
+        await users.update_one({"_id": user["_id"]}, {"$set": updates})
+        user = await users.find_one({"_id": user["_id"]})
+    return user_out(user)

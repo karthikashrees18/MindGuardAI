@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.auth.utils import get_current_user
 from app.config import (
     COUNSELOR_PHONE_NUMBER, NOTIFICATIONS_DRY_RUN,
     TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER,
@@ -38,7 +39,10 @@ async def _log_engagement(alert_type: str):
 
 
 @router.post("/emergency/alert", response_model=AlertResponse)
-async def emergency_alert(body: AlertRequest):
+async def emergency_alert(body: AlertRequest, user=Depends(get_current_user)):
+    # Always act on the authenticated student, never on a client-supplied id.
+    body.user_id = user["_id"]
+    body.user_name = body.user_name or (user.get("profile") or {}).get("preferred_name") or user.get("name")
     await _log_engagement(body.alert_type)
     text = body.message or f"{body.user_name} has requested support through Mind Guard AI. Please reach out."
 
@@ -64,14 +68,17 @@ async def emergency_alert(body: AlertRequest):
 
 
 @router.post("/contacts", response_model=TrustedContact)
-async def add_contact(body: TrustedContact):
+async def add_contact(body: TrustedContact, user=Depends(get_current_user)):
+    body.user_id = user["_id"]
     await contacts.insert_one(body.model_dump())
     return body
 
 
 @router.get("/contacts")
-async def list_contacts(user_id: str):
-    docs = [c async for c in contacts.find({"user_id": user_id})]
+async def list_contacts(user_id: str = "", user=Depends(get_current_user)):
+    if user_id and user_id != user["_id"]:
+        raise HTTPException(status_code=403, detail="You can only view your own contacts.")
+    docs = [c async for c in contacts.find({"user_id": user["_id"]})]
     for d in docs:
         d.pop("_id", None)
     return docs

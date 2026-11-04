@@ -1,10 +1,13 @@
 import base64
+from typing import Optional
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
+from app.auth.utils import get_optional_user
 from app.config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
+from app.music.catalog import TARGET_STATES, TRANSITIONS, recommend_tracks
 
 router = APIRouter(prefix="/api/music", tags=["music"])
 
@@ -70,8 +73,53 @@ async def get_spotify_token() -> str:
     return response.json()["access_token"]
 
 
+MOOD_TO_STATE = {
+    "overwhelmed": "calming", "anxious": "calming", "distressed": "calming", "stressed": "calming",
+    "ruminating": "grounded", "unsettled": "grounded", "angry": "grounded",
+    "low": "uplifting", "sad": "uplifting", "tired": "uplifting", "lonely": "uplifting",
+    "calm": "focus", "content": "uplifting", "hopeful": "uplifting", "neutral": "focus",
+}
+
+
+@router.get("/recommend")
+async def recommend(
+    state: Optional[str] = Query(None, description="calming | grounded | focus | uplifting"),
+    mood: Optional[str] = Query(None),
+    user=Depends(get_optional_user),
+):
+    """Curated, credential-free recommendations (generated soundscapes +
+    embedded Spotify playlists), ranked by the student's onboarding taste."""
+    target = state if state in TARGET_STATES else MOOD_TO_STATE.get((mood or "").lower(), "grounded")
+    prefs = (user or {}).get("music") or {}
+    return {
+        "target_state": target,
+        "transition": TRANSITIONS[target],
+        "tracks": recommend_tracks(target, prefs.get("genres"), prefs.get("languages"), prefs.get("playlists")),
+    }
+
+
 @router.post("/playlist")
-async def get_playlist(request: PlaylistRequest):
+async def get_playlist(request: PlaylistRequest, user=Depends(get_optional_user)):
+    # No Spotify API credentials? Serve the curated catalog in the same shape
+    # instead of failing, so the music feature always works.
+    if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
+        target = MOOD_TO_STATE.get(request.mood.lower().strip(), "grounded")
+        prefs = (user or {}).get("music") or {}
+        tracks = recommend_tracks(target, prefs.get("genres"), prefs.get("languages"), prefs.get("playlists"))
+        return {
+            "mood": request.mood,
+            "search_terms": TRANSITIONS[target]["label"],
+            "source": "curated",
+            "playlists": [
+                {
+                    "id": t["id"], "name": t["title"], "description": t["subtitle"],
+                    "external_url": t.get("external_url"), "embed_url": t.get("embed_url"), "image_url": None,
+                    "kind": t["kind"], "generator": t.get("generator"),
+                }
+                for t in tracks
+            ],
+        }
+
     token = await get_spotify_token()
 
     search_terms = get_search_terms(request.mood)
@@ -136,5 +184,6 @@ async def get_playlist(request: PlaylistRequest):
     return {
         "mood": request.mood,
         "search_terms": search_terms,
+        "source": "spotify",
         "playlists": playlists,
     }

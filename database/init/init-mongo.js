@@ -24,4 +24,11 @@ db.createCollection("engagement_events");
 db.engagement_events.createIndex({ created_at: -1 });
 db.engagement_events.createIndex({ alert_type: 1 });
 
+// --- Wellness / escalation ---
+db.createCollection("warning_flags");
+db.warning_flags.createIndex({ user_id: 1, status: 1 });
+
+db.createCollection("game_events");
+db.game_events.createIndex({ user_id: 1, created_at: -1 });
+
 print("mindguard: collections + indexes ready");

@@ -1,0 +1,54 @@
+/* Landing / auth / onboarding / demo dock (page-level styles) */
+.mg-onb-title { margin-bottom: 2px; }
+.mg-onb-title p { margin-top: 4px; }
+.mg-wide-panel { max-width: 560px; }
+.mg-auth-head { text-align: center; margin-bottom: 22px; }
+.mg-auth-head .mg-hero-orb { width: 64px; height: 64px; border-radius: 20px; margin: 0 auto 14px; }
+.mg-step-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 24px; }
+.mg-step-meta { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 18px; font-size: 12px; color: var(--text-3); }
+.mg-step-body { animation: mg-fade-up 0.35s cubic-bezier(.2,.8,.2,1) both; }
+.mg-pw-wrap { position: relative; }
+.mg-pw-wrap .mg-input { padding-right: 46px; }
+.mg-pw-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); }
+.mg-meter { display: flex; gap: 4px; margin-top: 8px; }
+.mg-meter i { flex: 1; height: 4px; border-radius: 4px; background: var(--surface-2); transition: background 0.2s; }
+.mg-meter.s1 i:nth-child(-n+1) { background: var(--coral); }
+.mg-meter.s2 i:nth-child(-n+2) { background: var(--amber); }
+.mg-meter.s3 i:nth-child(-n+3) { background: var(--teal); }
+.mg-meter.s4 i:nth-child(-n+4) { background: var(--teal); }
+.mg-check-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 13px; line-height: 1.5; }
+.mg-check-row input { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--violet); flex-shrink: 0; }
+.mg-check-row:focus-within { border-color: var(--violet); box-shadow: 0 0 0 3px var(--violet-soft); }
+.mg-form-error { padding: 10px 14px; border-radius: 12px; background: var(--coral-soft); color: var(--coral); font-size: 13px; }
+.mg-top-actions { position: fixed; top: 14px; right: 14px; z-index: 20; }
+
+/* landing */
+.mg-landing { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 22px 20px 60px; }
+.mg-landing-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mg-landing-nav .mg-brand { padding: 0; }
+.mg-hero { text-align: center; padding: 72px 0 52px; max-width: 760px; margin: 0 auto; }
+.mg-hero h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.06; letter-spacing: -0.035em; font-weight: 800; margin: 18px 0 16px; }
+.mg-hero p.lead { font-size: clamp(15px, 2vw, 18px); color: var(--text-2); line-height: 1.6; max-width: 600px; margin: 0 auto 28px; }
+.mg-hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.mg-hero .mg-hero-orb { margin: 0 auto; }
+.mg-feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.mg-feature-grid .mg-card h3 { margin: 14px 0 6px; font-size: 15px; }
+.mg-feature-grid .mg-card p { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+.mg-promise { margin-top: 28px; display: flex; gap: 16px; align-items: center; }
+.mg-landing-foot { margin-top: 34px; text-align: center; font-size: 12px; color: var(--text-3); }
+@media (max-width: 960px) { .mg-feature-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) {
+  .mg-feature-grid { grid-template-columns: 1fr; }
+  .mg-hero { padding: 44px 0 36px; }
+  .mg-promise { flex-direction: column; text-align: center; }
+  .mg-step-foot .mg-btn { padding-left: 14px; padding-right: 14px; }
+}
+
+/* demo dock */
+.mg-demo-panel { width: 330px; max-width: calc(100vw - 28px); margin-bottom: 10px; animation: mg-pop 0.25s both; }
+.mg-demo-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-family: inherit; transition: border-color 0.15s; }
+.mg-demo-row:hover:not(:disabled) { border-color: var(--border-strong); }
+.mg-demo-row.active { border-color: var(--violet); background: var(--violet-soft); }
+.mg-demo-row:disabled { opacity: 0.6; cursor: wait; }
+.mg-demo-row b { display: block; font-size: 13px; }
+.mg-demo-row span.sub { font-size: 11.5px; color: var(--text-3); }

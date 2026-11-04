@@ -20,6 +20,42 @@ different teammates can own a module with minimal merge conflicts, the
 way you would in a microservices setup, without the deployment
 overhead of running five separate containers.
 
+## What the system does
+
+| Area | Where |
+|---|---|
+| **Onboarding & baseline profile** - triggers, recovery time, coping preferences, music taste (genres, languages, pasted Spotify playlists per target state) | `frontend/src/pages/Auth.jsx`, `Onboarding.jsx` -> `PUT /api/auth/onboarding` |
+| **Dual-engine detection** - Engine 1 reads sentiment / stress / rumination markers (Claude if `ANTHROPIC_API_KEY` is set, otherwise an offline NLP lexicon); Engine 2 turns that into a personalised 0-100 score using the baseline, triggers and recent history. Bands: 0-40 Calm, 41-70 Mild Overthinking, 71-100 Critical. Every adjustment is returned so the UI can explain the score | `backend/app/ai/scoring.py`, `ai/analysis.py`, `engine/rumination.py` |
+| **Smart interventions** - mood-shifting music ("From Overthinking to Grounded"), 4-7-8 breathing animation, 5-min Pomodoro reset, journaling reframes, ordered by the student's coping preferences | `backend/app/interventions`, `music/catalog.py`, `frontend/src/components/*` |
+| **Music** - built-in Web Audio soundscapes (432 Hz ambient, theta binaural, lo-fi, rain) that always play, plus embedded Spotify playlists | `frontend/src/lib/audio.js` |
+| **Gamification** - Zen Bubble Pop, Thought Reframe, Streak & Wellness Garden (no-pressure: rest days forgiven, points capped daily) | `frontend/src/pages/games`, `backend/app/wellness` |
+| **Escalation** - early-warning flag on a critical entry or persistent rumination; 1-click confidential counselor connect | `backend/app/escalation` |
+| **Counselor portal** - alias-only risk queue (Critical / Moderate / Stable), trends, schedule / message / resolve actions; never shows journal text | `backend/app/counselor`, `frontend/src/admin/CounselorPortal.jsx` |
+| **Cohort analytics** - k-anonymised campus metrics (existing) | `backend/app/admin` |
+
+## Presentation guide (Monday)
+
+```bash
+docker compose up --build        # or run backend + frontend manually (below)
+```
+`DEMO_MODE=1` (default) seeds everything on first boot. Open http://localhost:5173 and use the
+**Demo** pill (bottom-right) - it appears on every screen.
+
+1. **Student A - High Rumination**: Demo -> Student A. Home shows a rising trend.
+   Check-in -> *Presentation shortcut* -> **High rumination** -> Analyze. Show: score 100 / Critical,
+   "Why this score?" breakdown, highlighted phrases, music transition + Play (built-in 432 Hz works offline),
+   4-7-8 breathing, the **Connect with a counselor** prompt - click it.
+2. Play **Zen Bubble Pop** or **Thought Reframe**, then open **Wellness garden** to show points.
+3. **Counselor**: Demo -> *Open counselor portal*. The new case appears under an anonymous ID with a
+   "Connect request" pill; open it, **Schedule intervention**. Back in Student A's app the counselor update appears.
+4. **Student B - Calm State**: Demo -> Student B. Calm check-in (shortcut -> Calm) -> garden grows, no warning.
+5. Reset Student A any time: Demo -> *Reset ... to pre-demo state*.
+
+Seeded logins: counselor@mindguard.ai / Counselor@123 - admin@mindguard.ai / Admin@123456 -
+aarav.demo@mindguard.ai and meera.demo@mindguard.ai / Demo@12345.
+
+Verification scripts (backend running): `python -m scripts.calibrate_engine`, `python -m scripts.smoke_test`.
+
 ## Suggested team split (5–6 people)
 
 | Owner | Area | What you'll build |
@@ -65,6 +101,15 @@ uvicorn app.main:app --reload --port 8000
 | POST | `/api/ai/chat` | ai | AI chatbot reply + mood/rumination score |
 | POST | `/api/ai/analyze-journal` | ai | sentiment/overthinking analysis of a journal entry |
 | POST | `/api/emergency/alert` | notifications | trigger SMS to counselor/trusted contact |
+| PUT | `/api/auth/onboarding` | auth | save baseline profile + music preferences |
+| POST | `/api/checkins` | journal | check-in / vent / reflection -> score, interventions, early warning, garden |
+| GET | `/api/interventions/current` | interventions | cards for the latest score |
+| GET | `/api/music/recommend?state=` | music | curated tracks for calming / grounded / focus / uplifting |
+| GET | `/api/garden` | wellness | streak + garden state |
+| POST | `/api/games/complete` | wellness | award (daily-capped) garden points |
+| GET/POST | `/api/support/status` `/connect` `/dismiss` | escalation | student side of the early-warning flow |
+| GET/POST | `/api/counselor/summary` `/cases` `/cases/{alias}` `/cases/{alias}/actions` | counselor | alias-only case management |
+| GET/POST | `/api/demo/personas` `/login` `/reset` | demo | persona switcher (DEMO_MODE only) |
 | GET | `/api/admin/aggregate-stats?period=` | admin | KPI banner + risk-tier distribution + anomaly alerts |
 | GET | `/api/admin/cohort-trends?period=` | admin | daily campus mood trendline |
 | GET | `/api/admin/department-breakdown?period=&group_by=` | admin | distress severity by department/year, k-anonymized |
@@ -149,6 +194,12 @@ See `.env.example`. Key ones:
 - `bcrypt==4.0.1` alongside `passlib==1.7.4` — newer bcrypt removed a
   version attribute `passlib`'s backend probe reads, which breaks
   signup/login entirely if bumped.
+
+## Security notes
+
+Journal, contacts and alert endpoints now require a bearer token and only act on the signed-in student
+(previously any caller could pass any `user_id`). Counselor endpoints are role-gated and audit-logged.
+Set `DEMO_MODE=0` and a real `JWT_SECRET` outside the demo.
 
 ## Data safety note
 

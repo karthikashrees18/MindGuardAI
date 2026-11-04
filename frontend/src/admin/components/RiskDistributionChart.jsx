@@ -1,6 +1,6 @@
 import React from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Card, CHART_COLORS, TIER_LABELS, TIER_ORDER } from "../theme";
+import { Card, CHART_COLORS, TIER_LABELS, TIER_ORDER, CHART, tooltipStyles } from "../theme";
 
 export default function RiskDistributionChart({ t, distribution, sampleSize }) {
   const data = TIER_ORDER.map((key) => ({
@@ -11,7 +11,7 @@ export default function RiskDistributionChart({ t, distribution, sampleSize }) {
   const hasData = data.some((d) => d.value > 0);
 
   return (
-    <Card t={t}>
+    <Card>
       <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>
         Overall student mental state distribution
       </div>
@@ -28,12 +28,12 @@ export default function RiskDistributionChart({ t, distribution, sampleSize }) {
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 10, fontSize: 12 }}
+                {...tooltipStyles}
               />
               <Legend
                 verticalAlign="bottom"
                 height={36}
-                formatter={(value) => <span style={{ color: t.textSecondary, fontSize: 12 }}>{value}</span>}
+                formatter={(value) => <span style={{ color: CHART.text, fontSize: 12 }}>{value}</span>}
               />
             </PieChart>
           </ResponsiveContainer>
