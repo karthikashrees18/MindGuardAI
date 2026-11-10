@@ -1,5 +1,5 @@
 // Zen Bubble Pop — a calm 60-second canvas game. Anxious thoughts float up in
-// glowing bubbles; popping one dissolves it into a gentle affirmation.
+// glowing bubbles; popping one turns it into a concrete, doable reframe.
 // No fail state: missed bubbles simply drift away.
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Flower2, Hand, RotateCcw, Sparkles, Volume2, VolumeX } from "lucide-react";
@@ -11,17 +11,23 @@ import "../../styles/games.css";
 
 const ROUND_SECONDS = 60;
 
+// Each bubble pairs a realistic student worry with a concrete, doable reframe
+// that appears when the bubble is popped.
 const THOUGHTS = [
-  "What if I fail?", "I'm falling behind", "Everyone's better than me", "I can't handle this",
-  "I should have done more", "What will they think?", "I'm not good enough", "What if I mess up?",
-  "I'll never catch up", "They must be annoyed with me", "It's all going wrong", "I'm such a failure",
-  "Why can't I just focus?", "I'm wasting time", "What if nobody likes it?", "I have to be perfect",
-];
-
-const AFFIRMATIONS = [
-  "You are doing enough", "This feeling will pass", "One step at a time", "You've handled hard things before",
-  "You are allowed to rest", "Progress, not perfection", "You are more than a grade", "Breathe. You're okay",
-  "Be kind to yourself", "You belong here", "Small steps still count", "You are not alone in this",
+  { thought: "Everyone else already got placed", reframe: "Timelines differ. Pick one company to research today and apply." },
+  { thought: "I'm completely behind on my project", reframe: "Behind isn't stuck. Split it up and finish just the next small part." },
+  { thought: "What if I blank out in the viva?", reframe: "Prepare 3 core points. If you blank, pause and say it's a good question." },
+  { thought: "I feel like an imposter in my branch", reframe: "Your seat was earned. Ask one doubt today; most people share it." },
+  { thought: "My attendance is low and I can't catch up", reframe: "Email your professor about make-up options. Asking early helps." },
+  { thought: "I have no energy left for today", reframe: "Do one 10-minute task, then rest. Small counts on low-energy days." },
+  { thought: "My CGPA is ruining my chances", reframe: "Projects, skills and interviews count too. Add one this week." },
+  { thought: "I bombed the interview, I'm hopeless", reframe: "Write down 2 questions you'd answer better, then practice those." },
+  { thought: "Everyone understood that lecture but me", reframe: "Ask a classmate to explain one concept. Teaching helps them too." },
+  { thought: "I can't focus for more than 5 minutes", reframe: "Try a 20-minute timer, phone away. Build up from there." },
+  { thought: "I'll never finish this backlog", reframe: "List the papers, order them by date, and start with the nearest." },
+  { thought: "My friends are all doing better than me", reframe: "You're comparing your behind-the-scenes to their highlights." },
+  { thought: "I haven't slept properly in days", reframe: "Tonight: screens off 30 minutes early. Sleep fuels everything else." },
+  { thought: "I'm wasting my parents' money", reframe: "You're learning every day. Show up for one class and one task." },
 ];
 
 // [h, s, l] — teal, violet, lavender, soft blue
@@ -156,22 +162,23 @@ export default function BubblePop() {
 
     function spawn() {
       const small = s.w < 520;
-      const r = rand(small ? 38 : 46, small ? 50 : 60);
-      let text = pick(THOUGHTS);
-      if (text === s.lastThought) text = pick(THOUGHTS);
-      s.lastThought = text;
-      ctx.font = `600 ${r * 0.25}px Inter, system-ui, sans-serif`;
-      let fs = r * 0.25;
-      let lines = wrapText(ctx, text, r * 1.5);
+      const r = rand(small ? 50 : 64, small ? 60 : 76);
+      let item = pick(THOUGHTS);
+      if (item === s.lastThought) item = pick(THOUGHTS);
+      s.lastThought = item;
+      const text = item.thought;
+      ctx.font = `600 ${r * 0.21}px Inter, system-ui, sans-serif`;
+      let fs = r * 0.21;
+      let lines = wrapText(ctx, text, r * 1.7);
       while (lines.length > 3 && fs > 8) {
         fs -= 1;
         ctx.font = `600 ${fs}px Inter, system-ui, sans-serif`;
-        lines = wrapText(ctx, text, r * 1.5);
+        lines = wrapText(ctx, text, r * 1.7);
       }
       s.bubbles.push({
         x: rand(r + 6, s.w - r - 6), y: s.h + r + 4, r, vy: rand(26, 46) * speedK,
         amp: rand(10, 26) * (reduced ? 0.5 : 1), freq: rand(0.5, 1.1), phase: rand(0, Math.PI * 2), t: 0, x0: 0,
-        hue: pick(HUES), text, lines, fs, born: s.elapsed,
+        hue: pick(HUES), text, reframe: item.reframe, lines, fs, born: s.elapsed,
       });
       s.bubbles[s.bubbles.length - 1].x0 = s.bubbles[s.bubbles.length - 1].x;
     }
@@ -192,10 +199,8 @@ export default function BubblePop() {
       if (i < 0) return;
       s.bubbles.splice(i, 1);
       burst(b);
-      let aff = pick(AFFIRMATIONS);
-      if (aff === s.lastAffirm) aff = pick(AFFIRMATIONS);
-      s.lastAffirm = aff;
-      s.floaters.push({ x: b.x, y: b.y, text: aff, life: 0, max: reduced ? 2.8 : 2.4, hue: b.hue, fs: Math.max(13, b.r * 0.3) });
+      const aff = b.reframe;
+      s.floaters.push({ x: b.x, y: b.y, text: aff, life: 0, max: reduced ? 4.5 : 4, hue: b.hue, fs: 14 });
 
       if (phaseRef.current === "playing") {
         s.combo = s.elapsed - s.lastPopAt < 1.7 ? s.combo + 1 : 1;
@@ -364,12 +369,16 @@ export default function BubblePop() {
         const k = f.life / f.max;
         const alpha = k < 0.15 ? k / 0.15 : 1 - Math.max(0, (k - 0.55) / 0.45);
         ctx.font = `700 ${f.fs}px Inter, system-ui, sans-serif`;
-        const x = Math.min(s.w - 70, Math.max(70, f.x));
+        const maxW = Math.min(230, s.w - 24);
+        const flines = wrapText(ctx, f.text, maxW);
+        const x = Math.min(s.w - maxW / 2 - 8, Math.max(maxW / 2 + 8, f.x));
+        const lh = f.fs * 1.3;
+        const y0 = Math.max(lh, f.y - (flines.length - 1) * lh / 2);
         ctx.save();
         ctx.shadowColor = `hsla(${f.hue[0]}, 90%, 70%, ${0.7 * alpha})`;
         ctx.shadowBlur = 14;
         ctx.fillStyle = `rgba(246, 250, 255, ${alpha})`;
-        ctx.fillText(f.text, x, f.y);
+        flines.forEach((ln, i) => ctx.fillText(ln, x, y0 + i * lh));
         ctx.restore();
       }
     }

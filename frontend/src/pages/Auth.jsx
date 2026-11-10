@@ -7,6 +7,8 @@ import {
 } from "../components/onboarding/BaselineSteps";
 import { useApp } from "../lib/store";
 import { navigate } from "../lib/router";
+import { adminApi, saveAdminToken, clearAdminToken } from "../admin/api";
+import { COUNSELOR_URL } from "../components/Shell";
 import "../styles/auth.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -71,8 +73,15 @@ function Brand({ title, sub }) {
 }
 
 /* ------------------------------------------------------------------ login */
+const ROLE_KEY = "mg_role";
+const ROLES = {
+  student: { label: "Student", placeholder: "you@university.edu", sub: "Sign in to continue your wellness journey." },
+  counselor: { label: "Counselor", placeholder: "counselor@university.edu", sub: "Sign in to the counselor dashboard." },
+};
+
 function Login() {
   const { signIn } = useApp();
+  const [role, setRole] = useState("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
@@ -90,7 +99,21 @@ function Login() {
     if (Object.keys(errs).length) return;
     setBusy(true);
     try {
+      if (role === "counselor") {
+        // Staff sign in against the same API but land in the counselor dashboard app.
+        const res = await adminApi.login(email.trim(), password);
+        saveAdminToken(res.access_token);
+        const me = await adminApi.me();
+        if (me.role !== "counselor" && me.role !== "admin") {
+          clearAdminToken();
+          throw new Error("This account doesn't have counselor access. Use the Student tab instead.");
+        }
+        try { localStorage.setItem(ROLE_KEY, me.role); } catch { /* storage blocked */ }
+        window.location.assign(COUNSELOR_URL);
+        return;
+      }
       await signIn(email.trim(), password);
+      try { localStorage.setItem(ROLE_KEY, "student"); } catch { /* storage blocked */ }
       navigate("/home");
     } catch (err) {
       setServerError(err?.message || "Couldn't sign you in. Please try again.");
@@ -100,9 +123,18 @@ function Login() {
 
   return (
     <form className="mg-glass-panel" onSubmit={submit} noValidate>
-      <Brand title="Welcome back" sub="Sign in to continue your wellness journey." />
+      <Brand title="Welcome back" sub={ROLES[role].sub} />
       <div className="mg-stack">
-        <TextField id="login-email" label="Email" type="email" autoComplete="email" placeholder="you@university.edu"
+        <div role="tablist" aria-label="Sign in as" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: 4, borderRadius: 14, background: "var(--surface)", border: "1px solid var(--border)" }}>
+          {Object.entries(ROLES).map(([key, r]) => (
+            <button key={key} type="button" role="tab" aria-selected={role === key}
+              className={`mg-btn ${role === key ? "violet" : "quiet"} sm`}
+              onClick={() => { setRole(key); setServerError(""); setErrors({}); }}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+        <TextField id="login-email" label="Email" type="email" autoComplete="email" placeholder={ROLES[role].placeholder}
           value={email} onChange={setEmail} error={errors.email} />
         <Field label={null} error={errors.password}>
           <label className="mg-label" htmlFor="login-password">Password</label>
@@ -110,11 +142,15 @@ function Login() {
             autoComplete="current-password" placeholder="Your password" />
         </Field>
         {serverError && <div className="mg-form-error" role="alert">{serverError}</div>}
-        <Button variant="violet" size="lg" block type="submit" loading={busy}>Sign in</Button>
-        <p className="mg-muted mg-small" style={{ textAlign: "center" }}>
-          New here?{" "}
-          <a href="#/signup" style={{ color: "var(--lavender)", fontWeight: 700 }}>Create account</a>
-        </p>
+        <Button variant="violet" size="lg" block type="submit" loading={busy}>
+          {role === "counselor" ? "Sign in to dashboard" : "Sign in"}
+        </Button>
+        {role === "student" && (
+          <p className="mg-muted mg-small" style={{ textAlign: "center" }}>
+            New here?{" "}
+            <a href="#/signup" style={{ color: "var(--lavender)", fontWeight: 700 }}>Create account</a>
+          </p>
+        )}
         <p style={{ textAlign: "center" }}>
           <a href="#/" className="mg-faint mg-small">Back to home</a>
         </p>
