@@ -10,17 +10,21 @@ Individual-level but privacy-preserving:
 
 (The cohort-level, k-anonymised analytics stay in app/admin.)
 """
+import base64
+import hashlib
 import uuid
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from cryptography.fernet import Fernet, InvalidToken
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.admin.routes import _log_access
 from app.auth.utils import require_role
-from app.database import journals, users, warning_flags
+from app.config import JWT_SECRET, K_ANONYMITY_THRESHOLD
+from app.database import counselor_notes, journals, users, warning_flags
 from app.engine.rumination import TRIGGER_LABEL, categorize
 from app.escalation.service import OPEN_STATUSES, alias_for
 
@@ -28,6 +32,23 @@ router = APIRouter(prefix="/api/counselor", tags=["counselor"])
 
 WINDOW_DAYS = 30
 RISK_ORDER = {"critical": 0, "moderate": 1, "stable": 2}
+
+
+_FERNET = Fernet(base64.urlsafe_b64encode(hashlib.sha256(("notes:" + JWT_SECRET).encode()).digest()))
+
+
+def _distress_tags(latest, avg_7d, trend, triggers: Counter) -> list[str]:
+    """Categorical, privacy-preserving markers inferred from scores and trigger tags.
+    Never derived from, or containing, journal text."""
+    tags = []
+    if latest is not None and latest >= 71:
+        tags.append("High rumination")
+    elif avg_7d is not None and avg_7d >= 56:
+        tags.append("Sustained stress")
+    if trend == "rising":
+        tags.append("Rising distress")
+    tags += [TRIGGER_LABEL.get(k, k.replace("_", " ").title()) for k, _ in triggers.most_common(2)]
+    return tags[:4]
 
 
 def _risk(flag: Optional[dict], last3: list[float]) -> str:
@@ -56,6 +77,7 @@ def _identity(user: Optional[dict], flag: Optional[dict]) -> Optional[dict]:
     profile = user.get("profile") or {}
     return {
         "name": profile.get("preferred_name") or user.get("name"),
+        "email": user.get("email"),
         "channel": connect.get("channel"),
         "contact_detail": connect.get("contact_detail"),
         "department": profile.get("department"),
@@ -94,6 +116,7 @@ async def _load_cases() -> list[dict]:
         {"user_id": 1, "created_at": 1, "rumination_score": 1, "triggers_detected": 1},
     ).sort("created_at", 1):
         by_user[doc["user_id"]].append(doc)
+    recent_cut = (datetime.now(timezone.utc) - timedelta(days=14)).isoformat()
 
     flags: dict[str, dict] = {}
     async for f in warning_flags.find({"status": {"$in": list(OPEN_STATUSES)}}):
@@ -119,7 +142,14 @@ async def _load_cases() -> list[dict]:
         spark_entries = [e for e in entries if e["created_at"] >= two_weeks]
         risk = _risk(flag, last3)
         latest = entries[-1] if entries else None
+        avg_7d_v = round(sum(last_week) / len(last_week)) if last_week else None
+        trig = Counter(t for e in entries if e["created_at"] >= recent_cut for t in (e.get("triggers_detected") or []))
+        trend_key = _trend([e["rumination_score"] for e in spark_entries])
+        profile = user_docs[uid].get("profile") or {}
         cases.append({
+            "department": profile.get("department"),
+            "year_of_study": profile.get("year_of_study"),
+            "tags": _distress_tags(round(latest["rumination_score"]) if latest else None, avg_7d_v, trend_key, trig),
             "alias": alias_for(uid),
             "risk": risk,
             "latest_score": round(latest["rumination_score"]) if latest else None,
@@ -155,6 +185,94 @@ async def summary(user=Depends(require_role("admin", "counselor"))):
         "stable": sum(1 for c in cases if c["risk"] == "stable"),
         "connect_requests": sum(1 for c in cases if c["flag"] and c["flag"]["connect_requested"] and c["flag"]["status"] in OPEN_STATUSES),
         "monitored": len(cases),
+    }
+
+
+def _day(iso: str) -> str:
+    return iso[:10]
+
+
+@router.get("/overview")
+async def overview(days: int = Query(7, ge=1, le=365), department: Optional[str] = None,
+                   user=Depends(require_role("admin", "counselor"))):
+    """Executive KPIs, a campus distress trend and the stressor breakdown.
+    Everything here is aggregate and k-anonymised: a day or stressor backed by
+    fewer than K_ANONYMITY_THRESHOLD students is suppressed, never shown."""
+    now = datetime.now(timezone.utc)
+    all_cases = await _load_cases()
+    cases = [c for c in all_cases if not department or c["department"] == department]
+    monitored = len(cases)
+    day_ago = (now - timedelta(hours=24)).isoformat()
+
+    def kpi(items, new_24h):
+        return {"count": len(items), "pct": round(100 * len(items) / monitored) if monitored else 0, "new_24h": new_24h}
+
+    def fresh(items):
+        return sum(1 for c in items if c["flag"] and c["flag"]["created_at"] >= day_ago)
+
+    crit = [c for c in cases if c["risk"] == "critical"]
+    mod = [c for c in cases if c["risk"] == "moderate"]
+    stable = [c for c in cases if c["risk"] == "stable"]
+    open_connect = [c for c in cases if c["flag"] and c["flag"]["connect_requested"] and c["flag"]["status"] in OPEN_STATUSES]
+
+    # campus trend: one point per day for the last 7 days (30 for longer windows)
+    chart_days = 7 if days <= 7 else 30
+    start = (now - timedelta(days=chart_days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    base_start = start - timedelta(days=30)
+    dept_ids = None
+    if department:
+        dept_ids = {u["_id"] async for u in users.find(
+            {"role": {"$nin": ["admin", "counselor"]}, "profile.department": department}, {"_id": 1})}
+    per_day: dict[str, dict] = defaultdict(lambda: {"scores": [], "students": set()})
+    base_scores, base_students = [], set()
+    span_triggers: dict[str, set] = defaultdict(set)
+    span_start = (now - timedelta(days=days)).isoformat()
+    async for e in journals.find(
+        {"created_at": {"$gte": base_start.isoformat()}, "rumination_score": {"$ne": None}, "source": {"$ne": "chat"}},
+        {"user_id": 1, "created_at": 1, "rumination_score": 1, "triggers_detected": 1},
+    ):
+        if dept_ids is not None and e["user_id"] not in dept_ids:
+            continue
+        if e["created_at"] >= start.isoformat():
+            d = per_day[_day(e["created_at"])]
+            d["scores"].append(e["rumination_score"])
+            d["students"].add(e["user_id"])
+        else:
+            base_scores.append(e["rumination_score"])
+            base_students.add(e["user_id"])
+        if e["created_at"] >= span_start:
+            for t in e.get("triggers_detected") or []:
+                span_triggers[t].add(e["user_id"])
+
+    baseline = round(sum(base_scores) / len(base_scores)) if len(base_students) >= K_ANONYMITY_THRESHOLD else None
+    trend = []
+    for i in range(chart_days):
+        day = (start + timedelta(days=i)).date().isoformat()
+        d = per_day.get(day)
+        ok = bool(d) and len(d["students"]) >= K_ANONYMITY_THRESHOLD
+        avg = round(sum(d["scores"]) / len(d["scores"])) if ok else None
+        trend.append({"date": day, "stress": avg, "wellness": None if avg is None else 100 - avg, "baseline": baseline})
+
+    stressors = sorted(
+        ({"key": k, "label": TRIGGER_LABEL.get(k, k.replace("_", " ").title()), "students": len(v)}
+         for k, v in span_triggers.items() if len(v) >= K_ANONYMITY_THRESHOLD),
+        key=lambda s: -s["students"])[:6]
+
+    depts = sorted({c["department"] for c in all_cases if c["department"]})
+    await _log_access(user, "/api/counselor/overview", {"days": days, "department": department})
+    return {
+        "monitored": monitored,
+        "critical": kpi(crit, fresh(crit)),
+        "moderate": kpi(mod, fresh(mod)),
+        "stable": kpi(stable, 0),
+        "connect_requests": {"count": len(open_connect),
+                             "pct": round(100 * len(open_connect) / monitored) if monitored else 0, "new_24h": 0},
+        "in_review": sum(1 for c in cases if c["flag"] and c["flag"]["status"] == "in_progress"),
+        "trend": trend,
+        "baseline": baseline,
+        "stressors": stressors,
+        "departments": depts,
+        "k_threshold": K_ANONYMITY_THRESHOLD,
     }
 
 
@@ -231,3 +349,40 @@ async def case_action(alias: str, body: CaseAction, user=Depends(require_role("a
     )
     await _log_access(user, "/api/counselor/cases/{alias}/actions", {"alias": alias, "type": body.type})
     return {"ok": True, "status": status}
+
+
+class NoteIn(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+async def _uid_for(alias: str) -> str:
+    case = next((c for c in await _load_cases() if c["alias"] == alias), None)
+    if not case:
+        raise HTTPException(404, "Case not found")
+    return case["_uid"]
+
+
+def _decrypt(token: str) -> str:
+    try:
+        return _FERNET.decrypt(token.encode()).decode()
+    except InvalidToken:
+        return "[unreadable note]"
+
+
+@router.get("/cases/{alias}/notes")
+async def list_notes(alias: str, user=Depends(require_role("admin", "counselor"))):
+    """Private counselor notes for one student (encrypted at rest)."""
+    doc = await counselor_notes.find_one({"_id": await _uid_for(alias)})
+    await _log_access(user, "/api/counselor/cases/{alias}/notes", {"alias": alias, "op": "read"})
+    return [{"id": n["id"], "text": _decrypt(n["text"]), "by_name": n["by_name"], "at": n["at"]}
+            for n in reversed((doc or {}).get("notes", []))]
+
+
+@router.post("/cases/{alias}/notes")
+async def add_note(alias: str, body: NoteIn, user=Depends(require_role("admin", "counselor"))):
+    uid = await _uid_for(alias)
+    note = {"id": str(uuid.uuid4()), "text": _FERNET.encrypt(body.text.strip().encode()).decode(),
+            "by_name": user.get("name", "Counselor"), "at": datetime.now(timezone.utc).isoformat()}
+    await counselor_notes.update_one({"_id": uid}, {"$push": {"notes": note}}, upsert=True)
+    await _log_access(user, "/api/counselor/cases/{alias}/notes", {"alias": alias, "op": "write"})
+    return {"id": note["id"], "text": body.text.strip(), "by_name": note["by_name"], "at": note["at"]}

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from "recharts";
-import { X, Check, CalendarClock, MessageCircle, CheckCheck, Copy, ShieldCheck, Lock, UserCheck, Inbox } from "lucide-react";
+import { X, Check, CalendarClock, MessageCircle, CheckCheck, Copy, ShieldCheck, Lock, UserCheck, Inbox, NotebookPen } from "lucide-react";
 import { Button, CategoryBadge, ScoreRing, Skeleton, Modal, Field } from "../../components/ui";
 import { counselorApi } from "../api";
 import { CHART, tooltipStyles } from "../theme";
@@ -8,6 +8,14 @@ import { TrendBadge, ACTION_LABELS, ago, channelMeta, fmtDateTime, parseTs } fro
 
 const CAT_LABEL = { calm: "Calm", mild: "Mild", critical: "Critical" };
 const CAT_COLOR = { calm: "var(--teal)", mild: "var(--amber)", critical: "var(--coral)" };
+
+const RANGES = [{ days: 7, label: "7 days" }, { days: 14, label: "14 days" }, { days: 30, label: "30 days" }];
+
+const NUDGE_TEMPLATES = [
+  "Hi, I noticed things might be heavy lately. I'm here whenever you'd like to talk, no pressure at all.",
+  "You're doing better than you think. If it would help, we can set up a short, relaxed chat this week.",
+  "Exams and deadlines pile up fast. Remember you don't have to carry it alone. My door is open, in person or online.",
+];
 
 function TrendTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -26,6 +34,10 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState(null); // schedule | outreach | resolve
   const [copied, setCopied] = useState(false);
+  const [range, setRange] = useState(14);
+  const [notes, setNotes] = useState(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [noteBusy, setNoteBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -46,6 +58,33 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
     load();
   }, [load]);
 
+  const loadNotes = useCallback(async () => {
+    try {
+      setNotes(await counselorApi.notes(alias));
+    } catch (err) {
+      if (err.status === 401 || err.status === 403) return onUnauthorized();
+      setNotes([]);
+    }
+  }, [alias, onUnauthorized]);
+
+  useEffect(() => { loadNotes(); }, [loadNotes]);
+
+  async function saveNote() {
+    const text = noteDraft.trim();
+    if (!text || noteBusy) return;
+    setNoteBusy(true);
+    try {
+      await counselorApi.addNote(alias, text);
+      setNoteDraft("");
+      notify("Private note saved.", "success");
+      await loadNotes();
+    } catch (err) {
+      notify(err.message || "Couldn't save the note.", "error");
+    } finally {
+      setNoteBusy(false);
+    }
+  }
+
   useEffect(() => {
     if (dialog) return undefined;
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -59,7 +98,10 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
 
   const chartData = useMemo(
     () =>
-      (detail?.trend || []).map((p) => {
+      (detail?.trend || []).filter((p) => {
+        const d = parseTs(p.at);
+        return d && Date.now() - d.getTime() <= range * 86400000;
+      }).map((p) => {
         const d = parseTs(p.at);
         return {
           score: p.score,
@@ -68,7 +110,7 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
           day: d ? d.toLocaleDateString([], { month: "short", day: "numeric" }) : "",
         };
       }),
-    [detail]
+    [detail, range]
   );
 
   async function perform(body, doneMsg) {
@@ -135,7 +177,14 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
               </div>
 
               <div className="mga-section">
-                <h4>Rumination trend (30 days)</h4>
+                <div className="mg-row mg-between" style={{ marginBottom: 10 }}>
+                  <h4 style={{ margin: 0 }}>Mood and stress trend</h4>
+                  <div className="mga-seg" role="group" aria-label="Trend range">
+                    {RANGES.map((r) => (
+                      <button key={r.days} type="button" className={range === r.days ? "on" : ""} aria-pressed={range === r.days} onClick={() => setRange(r.days)}>{r.label}</button>
+                    ))}
+                  </div>
+                </div>
                 {loading ? (
                   <Skeleton height={180} />
                 ) : chartData.length ? (
@@ -159,7 +208,7 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
                     </ResponsiveContainer>
                   </div>
                 ) : (
-                  <div className="mg-small mg-faint">No scored check-ins yet.</div>
+                  <div className="mg-small mg-faint">No scored check-ins in this range.</div>
                 )}
               </div>
 
@@ -232,6 +281,7 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
                       <span className="mga-pill identity"><UserCheck size={11} aria-hidden="true" /> Shared by the student</span>
                     </div>
                     <div className="mga-kv"><span>Name</span><span>{c.identity.name || "—"}</span></div>
+                    {c.identity.email && <div className="mga-kv"><span>Email</span><span>{c.identity.email}</span></div>}
                     {(c.identity.department || c.identity.year_of_study) && (
                       <div className="mga-kv"><span>Department / year</span><span>{[c.identity.department, c.identity.year_of_study && `Year ${c.identity.year_of_study}`].filter(Boolean).join(" · ")}</span></div>
                     )}
@@ -254,12 +304,33 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
                   <div className="mg-row" style={{ alignItems: "flex-start" }}>
                     <div className="mg-icon-tile violet" style={{ width: 34, height: 34 }}><Lock size={16} /></div>
                     <div>
-                      <div className="mg-h3" style={{ fontSize: 13.5 }}>Anonymous — reach out via in-app message</div>
+                      <div className="mg-h3" style={{ fontSize: 13.5 }}>Anonymous</div>
                       <p className="mg-small mg-muted" style={{ marginTop: 4, lineHeight: 1.55 }}>
-                        {detail?.privacy_note || "Identity is hidden unless the student shares it. Use an in-app outreach message — it reaches them confidentially."}
+                        Student chose to remain anonymous. You can send an in-app encouragement nudge or counselor chat invite.
                       </p>
                     </div>
                   </div>
+                )}
+              </div>
+
+              <div className="mga-section">
+                <h4><NotebookPen size={12} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Internal counselor notes</h4>
+                <p className="mg-tiny mg-faint" style={{ margin: "0 0 8px" }}>Private to counselors and encrypted at rest. Never shown to the student.</p>
+                <textarea className="mg-textarea" style={{ minHeight: 72 }} maxLength={2000} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)}
+                  placeholder="e.g. Outreach completed on Nov 10; follow up after lab exams." aria-label="New private note" />
+                <div className="mg-row mg-between" style={{ marginTop: 8 }}>
+                  <span className="mg-tiny mg-faint">{noteDraft.length}/2000</span>
+                  <Button variant="ghost" size="sm" icon={Check} loading={noteBusy} disabled={!noteDraft.trim()} onClick={saveNote}>Save note</Button>
+                </div>
+                {notes?.length > 0 && (
+                  <ul className="mga-timeline" style={{ marginTop: 12 }}>
+                    {notes.map((n) => (
+                      <li key={n.id}>
+                        <span className="mg-faint">{n.by_name} · {fmtDateTime(n.at)}</span>
+                        <div className="mg-small" style={{ whiteSpace: "pre-wrap" }}>{n.text}</div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
 
@@ -291,14 +362,14 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
 
         <div className="mga-drawer-foot">
           <Button variant="ghost" icon={CheckCheck} onClick={quickReview} disabled={!canAct}>Mark reviewed</Button>
-          <Button variant="ghost" icon={CalendarClock} onClick={() => setDialog("schedule")} disabled={!canAct}>Schedule intervention</Button>
-          <Button variant="violet" icon={MessageCircle} onClick={() => setDialog("outreach")} disabled={!canAct}>Send in-app message</Button>
+          <Button variant="ghost" icon={CalendarClock} onClick={() => setDialog("schedule")} disabled={!canAct}>Schedule Session</Button>
+          <Button variant="violet" icon={MessageCircle} onClick={() => setDialog("outreach")} disabled={!canAct}>Send In-App Counselor Nudge</Button>
           <Button variant="teal" icon={Check} onClick={() => setDialog("resolve")} disabled={!canAct}>Resolve</Button>
         </div>
       </aside>
 
-      <ScheduleDialog open={dialog === "schedule"} onClose={() => setDialog(null)} onSubmit={(b) => perform(b, `Intervention scheduled for ${alias}.`)} />
-      <OutreachDialog open={dialog === "outreach"} onClose={() => setDialog(null)} onSubmit={(b) => perform(b, `Message sent to ${alias} — they'll see it confidentially in their app.`)} />
+      <ScheduleDialog open={dialog === "schedule"} onClose={() => setDialog(null)} onSubmit={(b) => perform(b, `Session scheduled for ${alias}.`)} />
+      <OutreachDialog open={dialog === "outreach"} alias={alias} onClose={() => setDialog(null)} onSubmit={(b) => perform(b, `Message sent to ${alias} — they'll see it confidentially in their app.`)} />
       <ResolveDialog open={dialog === "resolve"} alias={alias} onClose={() => setDialog(null)} onSubmit={(b) => perform(b, `${alias} resolved.`)} />
     </>
   );
@@ -340,7 +411,7 @@ function ScheduleDialog({ open, onClose, onSubmit }) {
     run({ type: "schedule", scheduled_for: d.toISOString(), note: note.trim() || undefined });
   }
   return (
-    <Modal open={open} onClose={onClose} title="Schedule intervention"
+    <Modal open={open} onClose={onClose} title="Schedule in-person / virtual session"
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button loading={busy} onClick={go}>Schedule</Button></>}>
       <div className="mg-stack-sm">
         <p className="mg-small mg-muted">The student is notified confidentially that a counselor session is planned.</p>
@@ -356,7 +427,7 @@ function ScheduleDialog({ open, onClose, onSubmit }) {
   );
 }
 
-function OutreachDialog({ open, onClose, onSubmit }) {
+export function OutreachDialog({ open, alias, onClose, onSubmit }) {
   const [note, setNote] = useState("");
   const { busy, error, run, setError } = useSubmit(onSubmit);
   useEffect(() => { if (open) { setError(""); setNote(""); } }, [open, setError]);
@@ -365,10 +436,15 @@ function OutreachDialog({ open, onClose, onSubmit }) {
     run({ type: "outreach", note: note.trim() });
   }
   return (
-    <Modal open={open} onClose={onClose} title="Send in-app message"
-      footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="violet" loading={busy} onClick={go}>Send message</Button></>}>
+    <Modal open={open} onClose={onClose} title={alias ? `Send in-app nudge to ${alias}` : "Send in-app nudge"}
+      footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="violet" loading={busy} onClick={go}>Send nudge</Button></>}>
       <div className="mg-stack-sm">
         <p className="mg-small mg-muted">The student sees this confidentially inside their Mind Guard app. They stay anonymous to you unless they chose to share their identity.</p>
+        <div className="mg-row-wrap" role="group" aria-label="Message templates">
+          {NUDGE_TEMPLATES.map((m, i) => (
+            <button key={i} type="button" className="mg-chip" onClick={() => setNote(m)}>Template {i + 1}</button>
+          ))}
+        </div>
         <Field label="Message" hint={`${note.length}/500`}>
           <textarea className="mg-textarea" style={{ minHeight: 120 }} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Hi, I'm here whenever you'd like to talk. No pressure at all." />
         </Field>
