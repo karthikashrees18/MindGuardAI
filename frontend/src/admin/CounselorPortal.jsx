@@ -56,6 +56,28 @@ function exportCsv(rows, label) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// Used when the backend predates /api/counselor/overview: KPIs are rebuilt from the
+// case list so the queue still works (charts then show their empty state).
+function overviewFromCases(list, department) {
+  const cases = list.filter((c) => !department || c.department === department);
+  const n = cases.length;
+  const k = (items) => ({ count: items.length, pct: n ? Math.round((100 * items.length) / n) : 0, new_24h: 0 });
+  const connect = cases.filter((c) => c.flag?.connect_requested && c.flag.status !== "resolved");
+  return {
+    monitored: n,
+    critical: k(cases.filter((c) => c.risk === "critical")),
+    moderate: k(cases.filter((c) => c.risk === "moderate")),
+    stable: k(cases.filter((c) => c.risk === "stable")),
+    connect_requests: k(connect),
+    in_review: cases.filter((c) => c.flag?.status === "in_progress").length,
+    trend: [],
+    baseline: null,
+    k_threshold: 5,
+    departments: [...new Set(list.map((c) => c.department).filter(Boolean))].sort(),
+    fallback: true,
+  };
+}
+
 export default function CounselorPortal({ onUnauthorized }) {
   const [overview, setOverview] = useState(null);
   const [factors, setFactors] = useState(null);
@@ -88,11 +110,15 @@ export default function CounselorPortal({ onUnauthorized }) {
   const load = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
     try {
-      const [ov, list, sf] = await Promise.all([
-        counselorApi.overview(frame.days, dept || undefined),
+      const [ovRes, list, sf] = await Promise.all([
+        counselorApi.overview(frame.days, dept || undefined).catch((err) => {
+          if (err.status === 401 || err.status === 403) throw err;
+          return null; // older backend without /overview
+        }),
         counselorApi.cases(),
         adminApi.stressFactors(frame.period).catch(() => null),
       ]);
+      const ov = ovRes || overviewFromCases(list, dept);
       if (!mounted.current) return;
 
       // Highlight cases / connect requests that appeared since the previous poll.
