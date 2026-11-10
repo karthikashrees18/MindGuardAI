@@ -130,8 +130,8 @@ export default function AdminApp() {
             <div className="brand">
               <div className="brand-mark"><ShieldCheck size={20} /></div>
               <div style={{ minWidth: 0 }}>
-                <div className="mg-h2">{tab === "portal" ? "Counselor Portal" : "Cohort Wellness Analytics"}</div>
-                <div className="mg-small mg-muted">Signed in as {actor?.name} · {actor?.role}</div>
+                <div className="mg-h2">MindGuard AI — Campus Wellness &amp; Counselor Portal</div>
+                <div className="mg-small mg-muted">{tab === "portal" ? "Triage queue" : "Cohort analytics"} · Signed in as {actor?.name} · {actor?.role}</div>
               </div>
             </div>
             <div className="actions">
@@ -145,7 +145,7 @@ export default function AdminApp() {
               </PrimaryButton>
               {themeToggle}
               <a href="/#/home" style={{ textDecoration: "none" }}>
-                <GhostButton><ArrowLeft size={14} /> Back to Student View</GhostButton>
+                <GhostButton><ArrowLeft size={14} /> Exit to Student View</GhostButton>
               </a>
               <GhostButton onClick={handleLogout}><LogOut size={14} /> Log out</GhostButton>
             </div>

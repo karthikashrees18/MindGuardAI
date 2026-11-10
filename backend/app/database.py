@@ -11,6 +11,8 @@ db = client[MONGO_DB]
 users = db["users"]
 journals = db["journals"]
 contacts = db["contacts"]
+# counselor_notes: private clinical notes per student, encrypted at rest (see app/counselor/routes.py)
+counselor_notes = db["counselor_notes"]
 
 # --- Admin / Counselor analytics dashboard -----------------------------
 # broadcasts: anonymized, non-targeted wellness nudges counselors publish

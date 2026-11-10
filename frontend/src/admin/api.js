@@ -57,6 +57,11 @@ export const adminApi = {
 };
 
 export const counselorApi = {
+  overview: (days = 7, department) =>
+    request(`/api/counselor/overview?days=${days}${department ? `&department=${encodeURIComponent(department)}` : ""}`),
+  notes: (alias) => request(`/api/counselor/cases/${encodeURIComponent(alias)}/notes`),
+  addNote: (alias, text) =>
+    request(`/api/counselor/cases/${encodeURIComponent(alias)}/notes`, { method: "POST", body: JSON.stringify({ text }) }),
   summary: () => request("/api/counselor/summary"),
   cases: (risk) => request(`/api/counselor/cases${risk ? `?risk=${encodeURIComponent(risk)}` : ""}`),
   caseDetail: (alias) => request(`/api/counselor/cases/${encodeURIComponent(alias)}`),
