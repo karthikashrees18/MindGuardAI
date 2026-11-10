@@ -4,7 +4,7 @@ import { ShieldCheck } from "lucide-react";
 import { useApp } from "./lib/store";
 import { navigate, useRoute } from "./lib/router";
 import { Aurora, Button, Toasts } from "./components/ui";
-import Shell from "./components/Shell";
+import Shell, { COUNSELOR_URL } from "./components/Shell";
 import DemoDock from "./components/DemoDock";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
@@ -24,6 +24,9 @@ const GardenPage = lazy(() => import("./pages/GardenPage"));
 const Reports = lazy(() => import("./pages/Reports"));
 
 const PUBLIC = ["/", "/login", "/signup"];
+
+// #/counselor (or #/counselor-dashboard) hands off to the counselor dashboard app.
+const COUNSELOR_ROUTES = ["/counselor", "/counselor-dashboard"];
 
 const PRIVATE_ROUTES = {
   "/home": Home,
@@ -77,6 +80,7 @@ export default function App() {
 
   // route guards (done in an effect so we never navigate during render)
   useEffect(() => {
+    if (COUNSELOR_ROUTES.includes(path)) { window.location.replace(COUNSELOR_URL); return; }
     if (booting) return;
     if (!user && !PUBLIC.includes(path)) navigate("/", { replace: true });
     else if (user && PUBLIC.includes(path)) navigate("/home", { replace: true });
@@ -84,7 +88,7 @@ export default function App() {
   }, [user, booting, path]);
 
   let body;
-  if (booting) {
+  if (booting || COUNSELOR_ROUTES.includes(path)) {
     body = <Splash />;
   } else if (staffAccount && !user) {
     body = <StaffNotice account={staffAccount} />;

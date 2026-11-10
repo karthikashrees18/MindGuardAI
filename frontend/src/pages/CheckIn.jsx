@@ -9,6 +9,7 @@ import { CATEGORY_META, MOODS, SAMPLE_TEXTS } from "../lib/constants";
 import { Button, CategoryBadge, Card, PageHeader, ScoreRing } from "../components/ui";
 import { EarlyWarningBanner } from "../components/EarlyWarning";
 import InterventionCards from "../components/Interventions";
+import CheckinHistory from "../components/CheckinHistory";
 
 const MODES = [
   { key: "checkin", label: "Daily check-in", placeholder: "How are you really doing today? Write whatever is on your mind…" },
@@ -82,7 +83,7 @@ function Result({ result, text, onAgain }) {
                 <CategoryBadge category={cat} />
                 <span className="mg-badge violet">Mood: {a.mood}</span>
                 <span className="mg-badge violet" title="Which engine read your text">
-                  <Brain size={12} /> {a.engine === "claude" ? "Claude + scoring engine" : "On-device NLP + scoring engine"}
+                  <Brain size={12} /> {a.engine === "groq" ? "Groq AI + scoring engine" : "On-device NLP + scoring engine"}
                 </span>
               </div>
               <p style={{ fontSize: 15, lineHeight: 1.6 }}>{a.summary}</p>
@@ -186,6 +187,7 @@ export default function CheckIn() {
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
   const [submittedText, setSubmittedText] = useState("");
+  const [historyVersion, setHistoryVersion] = useState(0);   // bumped after each save -> history refetches
 
   // a journal prompt can be handed over by an intervention card
   useEffect(() => {
@@ -211,6 +213,7 @@ export default function CheckIn() {
       recordCheckin(res);
       setSubmittedText(text.trim());
       setResult(res);
+      setHistoryVersion((v) => v + 1);
       if (res.early_warning?.is_new) toast("We noticed you're carrying a lot — support is one tap away below.", { type: "warn", ms: 6000 });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
@@ -232,6 +235,7 @@ export default function CheckIn() {
       <>
         <PageHeader title="Your check-in" subtitle="Here's what we read from your entry, and what might help right now." />
         <Result result={result} text={submittedText} onAgain={again} />
+        <div style={{ marginTop: 18 }}><CheckinHistory version={historyVersion} /></div>
       </>
     );
   }
@@ -325,6 +329,7 @@ export default function CheckIn() {
           </Card>
         </div>
       </div>
+      <div style={{ marginTop: 18 }}><CheckinHistory version={historyVersion} /></div>
     </>
   );
 }

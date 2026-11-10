@@ -71,6 +71,9 @@ export default function AdminLogin({ onLogin, onDemoLogin }) {
         <div className="mg-tiny mg-faint" style={{ textAlign: "center", marginTop: 18, lineHeight: 1.5 }}>
           Access is restricted to counselor and admin accounts. Student accounts cannot sign in here.
         </div>
+        <div style={{ textAlign: "center", marginTop: 10 }}>
+          <a className="mg-small" href="/#/home">&larr; Back to Student View</a>
+        </div>
       </div>
     </div>
   );

@@ -43,8 +43,14 @@ export default function Chat() {
     setLoading(true);
     try {
       const res = await api.chat(history, text);
-      setHistory((h) => [...h, { role: "user", content: text }, { role: "assistant", content: res.reply }]);
-      setMessages((m) => [...m, { role: "assistant", text: res.reply }]);
+      if (res.llm_error) {
+        // The server couldn't get an AI answer. Show the notice, but keep it out of the
+        // conversation history so the model never sees (or echoes) its own error text.
+        setMessages((m) => [...m, { role: "assistant", text: res.reply, notice: true }]);
+      } else {
+        setHistory((h) => [...h, { role: "user", content: text }, { role: "assistant", content: res.reply }]);
+        setMessages((m) => [...m, { role: "assistant", text: res.reply }]);
+      }
       setSignal(res);
       setScores((s) => [...s.slice(-11), res.rumination_score]);
       setCards((res.interventions || []).filter((c) => ["music", "breathing", "counselor"].includes(c.type)).slice(0, 2));
@@ -66,7 +72,7 @@ export default function Chat() {
         <Card flush style={{ display: "flex", flexDirection: "column", height: "min(680px, calc(100vh - 190px))", minHeight: 460 }}>
           <div className="mg-scroll" style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 10 }} aria-live="polite">
             {messages.map((m, i) => (
-              <div key={i} className={`mg-bubble ${m.role === "user" ? "user" : "ai"}`}>{m.text}</div>
+              <div key={i} className={`mg-bubble ${m.role === "user" ? "user" : "ai"}`} style={m.notice ? { fontStyle: "italic", opacity: 0.85 } : undefined}>{m.text}</div>
             ))}
             {loading && <div className="mg-bubble ai"><span className="mg-typing" aria-label="Typing"><i /><i /><i /></span></div>}
             {error && <div className="mg-error" role="alert">{error}</div>}

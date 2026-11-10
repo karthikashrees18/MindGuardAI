@@ -1,5 +1,5 @@
 from typing import Any, List, Optional, Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ChatTurn(BaseModel):
@@ -9,7 +9,7 @@ class ChatTurn(BaseModel):
 
 class ChatRequest(BaseModel):
     history: List[ChatTurn] = []
-    message: str
+    message: str = Field(min_length=1, max_length=2000)
 
 
 class AnalysisResult(BaseModel):
@@ -32,6 +32,9 @@ class AnalysisResult(BaseModel):
     # chat only: set when this message pushed the student over an escalation rule
     early_warning: Optional[bool] = None
     interventions: Optional[List[Any]] = None
+    # chat only: true when the LLM call failed and `reply` is an error notice,
+    # not a model answer (the client must not add it to the conversation history)
+    llm_error: Optional[bool] = None
 
 
 class JournalAnalyzeRequest(BaseModel):

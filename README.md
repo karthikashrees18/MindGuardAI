@@ -25,7 +25,7 @@ overhead of running five separate containers.
 | Area | Where |
 |---|---|
 | **Onboarding & baseline profile** - triggers, recovery time, coping preferences, music taste (genres, languages, pasted Spotify playlists per target state) | `frontend/src/pages/Auth.jsx`, `Onboarding.jsx` -> `PUT /api/auth/onboarding` |
-| **Dual-engine detection** - Engine 1 reads sentiment / stress / rumination markers (Claude if `ANTHROPIC_API_KEY` is set, otherwise an offline NLP lexicon); Engine 2 turns that into a personalised 0-100 score using the baseline, triggers and recent history. Bands: 0-40 Calm, 41-70 Mild Overthinking, 71-100 Critical. Every adjustment is returned so the UI can explain the score | `backend/app/ai/scoring.py`, `ai/analysis.py`, `engine/rumination.py` |
+| **Dual-engine detection** - Engine 1 reads sentiment / stress / rumination markers (Groq LLM if `GROQ_API_KEY` is set, otherwise an offline NLP lexicon); Engine 2 turns that into a personalised 0-100 score using the baseline, triggers and recent history. Bands: 0-40 Calm, 41-70 Mild Overthinking, 71-100 Critical. Every adjustment is returned so the UI can explain the score | `backend/app/ai/scoring.py`, `ai/analysis.py`, `engine/rumination.py` |
 | **Smart interventions** - mood-shifting music ("From Overthinking to Grounded"), 4-7-8 breathing animation, 5-min Pomodoro reset, journaling reframes, ordered by the student's coping preferences | `backend/app/interventions`, `music/catalog.py`, `frontend/src/components/*` |
 | **Music** - built-in Web Audio soundscapes (432 Hz ambient, theta binaural, lo-fi, rain) that always play, plus embedded Spotify playlists | `frontend/src/lib/audio.js` |
 | **Gamification** - Zen Bubble Pop, Thought Reframe, Streak & Wellness Garden (no-pressure: rest days forgiven, points capped daily) | `frontend/src/pages/games`, `backend/app/wellness` |
@@ -63,14 +63,14 @@ Verification scripts (backend running): `python -m scripts.calibrate_engine`, `p
 | 1 | `frontend` | React UI, all 10 screens, calling the backend |
 | 2 | `backend/app/auth` | signup/login, password hashing, JWT |
 | 3 | `backend/app/journal` | journal CRUD, mood/stress storage, reports aggregation |
-| 4 | `backend/app/ai` | chat endpoint (Claude API), rumination/sentiment scoring |
+| 4 | `backend/app/ai` | chat endpoint (Groq API), rumination/sentiment scoring |
 | 5 | `backend/app/notifications` | Twilio SMS, counselor/trusted-contact escalation |
 | 6 (optional) | `database` | schema/index design, data-safety review, seeding demo data |
 
 ## Running everything locally
 
 ```bash
-cp .env.example .env        # fill in ANTHROPIC_API_KEY, TWILIO_* (optional), JWT_SECRET
+cp .env.example .env        # fill in GROQ_API_KEY, TWILIO_* (optional), JWT_SECRET
 docker compose up --build
 ```
 
@@ -179,7 +179,7 @@ every account created through `/api/auth/signup` is a student.
 
 See `.env.example`. Key ones:
 
-- `ANTHROPIC_API_KEY` — used by the `ai` module for chat + scoring;
+- `GROQ_API_KEY` — used by the `ai` module for chat + scoring;
   falls back to a lightweight keyword-based scorer if unset, so the app
   still runs without a key.
 - `JWT_SECRET` — signs and verifies auth tokens.
