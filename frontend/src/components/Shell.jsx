@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import {
   BarChart3, BookHeart, Flower2, Gamepad2, HeartHandshake, Home, LifeBuoy, LogOut, Menu, MessageCircle,
-  Moon, ShieldCheck, Sparkles, Stethoscope, Sun, User, Wind, X,
+  Moon, ShieldCheck, Sparkles, Sun, User, Wind, X,
 } from "lucide-react";
 import { useApp } from "../lib/store";
 import { navigate } from "../lib/router";
@@ -19,7 +19,8 @@ const NAV = [
   { path: "/reports", label: "Reports", icon: BarChart3 },
   { path: "/profile", label: "Profile", icon: User },
 ];
-// The counselor dashboard is its own app (admin.html) with its own staff login.
+// Staff reach the counselor dashboard (admin.html) from the Counselor tab on the sign-in
+// screen, never from the student navigation.
 export const COUNSELOR_URL = "/admin.html";
 
 const TABS = [NAV[0], NAV[1], NAV[3], NAV[4]];
@@ -40,14 +41,6 @@ function Brand() {
       <div className="mg-brand-mark"><ShieldCheck size={18} /></div>
       Mind Guard AI
     </div>
-  );
-}
-
-function CounselorLink({ onClick }) {
-  return (
-    <a className="mg-nav-item" href={COUNSELOR_URL} onClick={onClick} style={{ textDecoration: "none" }}>
-      <Stethoscope size={17} /> Counselor Dashboard
-    </a>
   );
 }
 
@@ -81,7 +74,6 @@ export default function Shell({ path, children }) {
             <Icon size={17} /> {label}
           </button>
         ))}
-        <CounselorLink />
         <div style={{ flex: 1 }} />
         <SosButton path={path} flagged={flagged} />
         <button className="mg-nav-item" onClick={toggleTheme} style={{ marginTop: 6 }}>
@@ -140,7 +132,6 @@ export default function Shell({ path, children }) {
               {NAV.map(({ path: p, label, icon: Icon }) => (
                 <button key={p} className={`mg-nav-item ${isActive(path, p) ? "active" : ""}`} onClick={() => navigate(p)}><Icon size={17} /> {label}</button>
               ))}
-              <CounselorLink />
               <SosButton path={path} flagged={flagged} onClick={() => setMenu(false)} />
               <button className="mg-nav-item" onClick={logout}><LogOut size={17} /> Log out</button>
             </div>
