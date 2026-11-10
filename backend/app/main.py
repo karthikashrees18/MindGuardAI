@@ -16,6 +16,7 @@ from app.config import ALLOWED_ORIGINS, DEMO_MODE
 from app.counselor.routes import router as counselor_router
 from app.database import ensure_indexes
 from app.demo.routes import router as demo_router
+from app.auth.staff import ensure_counselor_account
 from app.demo.seed import ensure_demo_data
 from app.escalation.routes import router as support_router
 from app.interventions.routes import router as interventions_router
@@ -30,6 +31,7 @@ logger = logging.getLogger("mindguard")
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await ensure_indexes()
+    await ensure_counselor_account()
     if DEMO_MODE:
         await ensure_demo_data()
         logger.info("DEMO_MODE on — demo personas, counselor/admin logins and cohort data are seeded.")

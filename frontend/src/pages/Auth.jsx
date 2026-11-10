@@ -82,6 +82,9 @@ const ROLES = {
 function Login() {
   const { signIn } = useApp();
   const [role, setRole] = useState("student");
+  // Non-secret convenience: the counselor tab pre-fills the email (set VITE_COUNSELOR_EMAIL on Vercel);
+  // the password comes from the browser's saved-password autofill.
+  const counselorEmail = import.meta.env.VITE_COUNSELOR_EMAIL || "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
@@ -129,7 +132,7 @@ function Login() {
           {Object.entries(ROLES).map(([key, r]) => (
             <button key={key} type="button" role="tab" aria-selected={role === key}
               className={`mg-btn ${role === key ? "violet" : "quiet"} sm`}
-              onClick={() => { setRole(key); setServerError(""); setErrors({}); }}>
+              onClick={() => { setRole(key); setServerError(""); setErrors({}); setEmail(key === "counselor" ? counselorEmail : ""); }}>
               {r.label}
             </button>
           ))}
