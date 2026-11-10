@@ -90,8 +90,18 @@ def _to_result(a: dict, reply: Optional[str] = None, **extra) -> AnalysisResult:
 
 
 @router.get("/health")
-async def ai_health():
-    return {"ai_backend": "groq" if llm_configured() else "keyword-fallback", "model": GROQ_MODEL if llm_configured() else None}
+async def ai_health(probe: bool = False):
+    """`?probe=true` makes one tiny real Groq call and reports the outcome, so a
+    misconfigured key/model can be diagnosed without server logs. The key is never returned."""
+    out = {"ai_backend": "groq" if llm_configured() else "keyword-fallback", "model": GROQ_MODEL if llm_configured() else None}
+    if probe and llm_configured():
+        try:
+            await call_llm([{"role": "user", "content": "Reply with the single word: ok"}], max_tokens=5, temperature=0)
+            out["probe"] = "ok"
+        except LLMError as exc:
+            out["probe"] = "failed"
+            out["probe_error"] = exc.reason[:300]
+    return out
 
 
 @router.post("/chat", response_model=AnalysisResult)
