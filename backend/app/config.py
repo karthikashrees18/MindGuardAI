@@ -30,6 +30,12 @@ NOTIFICATIONS_DRY_RUN = not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO
 # "*" (default, for local dev) allows any origin.
 ALLOWED_ORIGINS = [o.strip().rstrip("/") for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 
+# --- Counselor login provisioned at startup (see app/auth/staff.py) -----------
+# Demo defaults (shown on the sign-in screen). Override both in Render for a real deployment.
+COUNSELOR_LOGIN_EMAIL = os.getenv("COUNSELOR_EMAIL", "counselor@mindguard.ai").strip()
+COUNSELOR_LOGIN_PASSWORD = os.getenv("COUNSELOR_PASSWORD", "Counselor@123")
+COUNSELOR_LOGIN_NAME = os.getenv("COUNSELOR_NAME", "Campus Counselor")
+
 # --- Admin / Counselor analytics dashboard -----------------------------
 K_ANONYMITY_THRESHOLD = int(os.getenv("K_ANONYMITY_THRESHOLD", "5"))
 

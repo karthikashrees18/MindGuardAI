@@ -82,6 +82,10 @@ const ROLES = {
 function Login() {
   const { signIn } = useApp();
   const [role, setRole] = useState("student");
+  // Demo build: the Counselor tab pre-fills the seeded demo login (override with VITE_COUNSELOR_EMAIL /
+  // VITE_COUNSELOR_PASSWORD; set the password to "" in a real deployment).
+  const counselorEmail = import.meta.env.VITE_COUNSELOR_EMAIL ?? "counselor@mindguard.ai";
+  const counselorPassword = import.meta.env.VITE_COUNSELOR_PASSWORD ?? "Counselor@123";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
@@ -129,7 +133,7 @@ function Login() {
           {Object.entries(ROLES).map(([key, r]) => (
             <button key={key} type="button" role="tab" aria-selected={role === key}
               className={`mg-btn ${role === key ? "violet" : "quiet"} sm`}
-              onClick={() => { setRole(key); setServerError(""); setErrors({}); }}>
+              onClick={() => { setRole(key); setServerError(""); setErrors({}); setEmail(key === "counselor" ? counselorEmail : ""); setPassword(key === "counselor" ? counselorPassword : ""); }}>
               {r.label}
             </button>
           ))}
@@ -145,6 +149,11 @@ function Login() {
         <Button variant="violet" size="lg" block type="submit" loading={busy}>
           {role === "counselor" ? "Sign in to dashboard" : "Sign in"}
         </Button>
+        {role === "counselor" && counselorPassword && (
+          <p className="mg-faint mg-tiny" style={{ textAlign: "center" }}>
+            Demo login pre-filled: {counselorEmail} / {counselorPassword}
+          </p>
+        )}
         {role === "student" && (
           <p className="mg-muted mg-small" style={{ textAlign: "center" }}>
             New here?{" "}

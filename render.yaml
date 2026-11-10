@@ -20,5 +20,9 @@ services:
         sync: false
       - key: DEMO_MODE
         value: "0"
+      - key: COUNSELOR_EMAIL
+        sync: false
+      - key: COUNSELOR_PASSWORD
+        sync: false
       - key: GROQ_API_KEY
         sync: false
