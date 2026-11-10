@@ -1,6 +1,6 @@
 # Mind Guard AI - Run & Setup Guide
 
-Everything you need to start the project, open the student and counselor dashboards, and set up the optional extras (Spotify, Claude, SMS).
+Everything you need to start the project, open the student and counselor dashboards, and set up the optional extras (Spotify, Groq AI, SMS).
 
 ---
 
@@ -90,7 +90,7 @@ Frontend: http://localhost:5173. Backend: http://localhost:8000. Docker reads th
 When you run the backend manually (section 2), it does **not** read the `.env` file. Set variables in the same PowerShell window **before** `uvicorn`:
 
 ```powershell
-$env:ANTHROPIC_API_KEY = "sk-ant-..."
+$env:GROQ_API_KEY = "gsk_..."
 $env:SPOTIFY_CLIENT_ID = "..."
 $env:SPOTIFY_CLIENT_SECRET = "..."
 uvicorn app.main:app --port 8000
@@ -99,8 +99,8 @@ uvicorn app.main:app --port 8000
 
 | Variable | Purpose | If not set |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Claude reads the text and writes chat replies | Offline analysis engine is used; everything still works |
-| `ANTHROPIC_MODEL` | Override the Claude model (default `claude-sonnet-5-5`) | Default is used |
+| `GROQ_API_KEY` | Groq LLM reads the text and writes the AI companion's replies | Offline analysis engine is used for scoring; the companion says it is not configured |
+| `GROQ_MODEL` / `GROQ_FALLBACK_MODEL` | Override the chat models (defaults `llama-3.3-70b-versatile` / `llama-3.1-8b-instant`) | Defaults are used |
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Live Spotify playlist search (optional) | Built-in curated catalog is used |
 | `TWILIO_*`, `COUNSELOR_PHONE_NUMBER` | Real SMS to counselor / trusted contacts | Dry-run: SMS is only logged, nothing is sent |
 | `JWT_SECRET` | Signs login tokens | Insecure dev default; change it for any real use |
@@ -145,10 +145,10 @@ Only the old `/api/music/playlist` search endpoint uses these. The app works ful
 
 ---
 
-## 8. Optional: Claude (AI text analysis and chat replies)
-1. Get a key at https://console.anthropic.com -> API keys.
-2. Set `ANTHROPIC_API_KEY` as in section 6 and restart the backend.
-3. Check: http://localhost:8000/api/ai/health should say `"ai_backend": "claude"`. On the check-in result screen the badge changes from "On-device NLP" to "Claude".
+## 8. Optional: Groq (AI text analysis and chat replies)
+1. Get a key at https://console.groq.com/keys .
+2. Set `GROQ_API_KEY` (free key at https://console.groq.com/keys) as in section 6 and restart the backend.
+3. Check: http://localhost:8000/api/ai/health should say `"ai_backend": "groq"`. On the check-in result screen the badge changes from "On-device NLP" to "Groq AI".
 
 If the call fails (no network, bad key), the app silently falls back to the offline engine, so the demo never breaks.
 

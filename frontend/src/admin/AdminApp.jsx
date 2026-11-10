@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ShieldCheck, Download, Megaphone, Sun, Moon, LogOut, LayoutDashboard, HeartPulse } from "lucide-react";
+import { ShieldCheck, Download, Megaphone, Sun, Moon, LogOut, LayoutDashboard, HeartPulse, ArrowLeft } from "lucide-react";
 import { Aurora } from "../components/ui";
 import { GlobalStyle, DARK, LIGHT, GhostButton, PrimaryButton } from "./theme";
 import { adminApi, saveAdminToken, getAdminToken, clearAdminToken } from "./api";
@@ -144,6 +144,9 @@ export default function AdminApp() {
                 <Megaphone size={14} /> New broadcast
               </PrimaryButton>
               {themeToggle}
+              <a href="/#/home" style={{ textDecoration: "none" }}>
+                <GhostButton><ArrowLeft size={14} /> Back to Student View</GhostButton>
+              </a>
               <GhostButton onClick={handleLogout}><LogOut size={14} /> Log out</GhostButton>
             </div>
           </header>

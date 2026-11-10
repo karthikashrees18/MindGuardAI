@@ -55,3 +55,18 @@ class CheckinResponse(BaseModel):
     early_warning: Dict[str, Any]
     garden: Dict[str, Any]
     first_checkin_today: bool
+
+
+class CheckinHistoryItem(BaseModel):
+    id: str
+    created_at: str
+    mood: Optional[str] = None            # emoji the student tapped
+    mood_label: Optional[str] = None      # engine's label, e.g. "Anxious"
+    stress_level: Optional[int] = None    # slider value, 0-100
+    rumination_score: Optional[int] = None  # 0-100, higher = more distress
+    wellness_score: Optional[int] = None  # 100 - rumination_score, higher = better
+    category: Optional[str] = None        # calm | mild | critical
+    sentiment: Optional[float] = None
+    source: Optional[str] = None
+    excerpt: Optional[str] = None         # None for private vent entries
+    confidential: bool = False

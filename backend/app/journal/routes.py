@@ -9,7 +9,7 @@ from app.auth.utils import get_current_user
 from app.database import journals
 from app.engine.rumination import TRIGGER_LABEL, categorize
 from app.journal.models import (
-    CheckinRequest, CheckinResponse, JournalCreate, JournalOut, ReportsSummary,
+    CheckinHistoryItem, CheckinRequest, CheckinResponse, JournalCreate, JournalOut, ReportsSummary,
 )
 from app.journal.service import process_entry
 
@@ -56,6 +56,41 @@ async def create_checkin(body: CheckinRequest, user=Depends(get_current_user)):
         garden=result["garden"],
         first_checkin_today=result["first_checkin_today"],
     )
+
+
+def _excerpt(text: str, n: int = 140) -> str:
+    text = " ".join((text or "").split())
+    return text if len(text) <= n else text[: n - 1].rstrip() + "…"
+
+
+def to_history_item(doc) -> CheckinHistoryItem:
+    rum = doc.get("rumination_score")
+    rum = None if rum is None else max(0, min(100, round(rum)))
+    # Vent-box entries are the most private; show that they exist, never their text.
+    confidential = doc.get("source") == "vent"
+    return CheckinHistoryItem(
+        id=doc["_id"],
+        created_at=doc["created_at"],
+        mood=doc.get("mood"),
+        mood_label=doc.get("mood_label"),
+        stress_level=doc.get("stress_level"),
+        rumination_score=rum,
+        wellness_score=None if rum is None else 100 - rum,
+        category=doc.get("category") or (categorize(rum)["key"] if rum is not None else None),
+        sentiment=doc.get("sentiment"),
+        source=doc.get("source"),
+        excerpt=None if confidential else _excerpt(doc.get("text", "")),
+        confidential=confidential,
+    )
+
+
+@router.get("/checkins/history", response_model=List[CheckinHistoryItem])
+async def checkin_history(limit: int = Query(30, ge=1, le=100), user=Depends(get_current_user)):
+    """The signed-in student's own check-ins, newest first. AI-companion chat
+    messages are stored in the same collection but are not check-ins, so they
+    are excluded."""
+    cursor = journals.find({"user_id": user["_id"], "source": {"$ne": "chat"}}).sort("created_at", -1).limit(limit)
+    return [to_history_item(doc) async for doc in cursor]
 
 
 @router.post("/journals", response_model=JournalOut)

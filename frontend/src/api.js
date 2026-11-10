@@ -69,6 +69,8 @@ export const api = {
   // body: { text, mood?, stress_level?, source?: "checkin"|"vent"|"reflection" }
   // -> { entry, analysis, interventions:{target_state,transition,cards[]}, early_warning:{triggered,is_new,flag,show_prompt}, garden, first_checkin_today }
   checkin: (body) => post("/api/checkins", body),
+  // -> [{ id, created_at, mood, mood_label, stress_level, rumination_score, wellness_score, category, sentiment, source, excerpt, confidential }] newest first
+  checkinHistory: (limit = 30) => request(`/api/checkins/history?limit=${limit}`),
   listJournals: (limit = 50) => request(`/api/journals?limit=${limit}`),
   reportsSummary: () => request("/api/journals/reports/summary"),
 

@@ -1,5 +1,5 @@
 """
-Glue between Engine 1 (text analysis: Claude when a key is configured,
+Glue between Engine 1 (text analysis: an LLM (Groq) when a key is configured,
 lexicon otherwise) and Engine 2 (personalised rumination score).
 
 `analyze_entry` is the single function every feature calls — check-ins,
@@ -13,7 +13,7 @@ from typing import Optional, Sequence
 import httpx
 
 from app.ai.scoring import analyze_text
-from app.config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL, ANTHROPIC_URL
+from app.config import GROQ_API_KEY, GROQ_BASE_URL, GROQ_FALLBACK_MODEL, GROQ_MODEL
 from app.engine.rumination import compute_rumination
 
 logger = logging.getLogger("ai.analysis")
@@ -36,34 +36,88 @@ Respond with ONLY a single valid JSON object — no markdown fences, no commenta
 }"""
 
 
-async def call_claude_json(system_prompt: str, messages: list, max_tokens: int = 700) -> dict:
-    if not ANTHROPIC_API_KEY:
-        raise RuntimeError("no_api_key")
-    async with httpx.AsyncClient(timeout=25) as client:
-        resp = await client.post(
-            ANTHROPIC_URL,
-            headers={
-                "x-api-key": ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={"model": ANTHROPIC_MODEL, "max_tokens": max_tokens, "system": system_prompt, "messages": messages},
-        )
-        resp.raise_for_status()
-        data = resp.json()
-    block = next((b["text"] for b in data.get("content", []) if b.get("type") == "text"), "")
-    cleaned = block.replace("```json", "").replace("```", "").strip()
-    return json.loads(cleaned)
+class LLMError(RuntimeError):
+    """Raised when the Groq call fails; `.reason` is a short, user-safe description."""
+
+    def __init__(self, reason: str):
+        super().__init__(reason)
+        self.reason = reason
 
 
-async def engine1(text: str) -> dict:
-    """Engine 1 — Claude if available, lexicon otherwise. Always returns the
-    same shape as ai.scoring.analyze_text."""
-    lex = analyze_text(text)
-    if not ANTHROPIC_API_KEY:
-        return lex
+def llm_configured() -> bool:
+    return bool(GROQ_API_KEY)
+
+
+async def call_llm(messages: list, *, max_tokens: int = 500, temperature: float = 0.7, json_mode: bool = False) -> str:
+    """Chat completion against Groq's OpenAI-compatible endpoint.
+
+    `messages` is the full [{role: system|user|assistant, content}] list, so the
+    model always sees the whole conversation. Tries GROQ_MODEL, then
+    GROQ_FALLBACK_MODEL. Every failure is logged with its specific cause and
+    re-raised as LLMError — nothing is swallowed silently.
+    """
+    if not GROQ_API_KEY:
+        raise LLMError("GROQ_API_KEY is not set")
+    last = "unknown error"
+    async with httpx.AsyncClient(timeout=30) as client:
+        for model in dict.fromkeys([GROQ_MODEL, GROQ_FALLBACK_MODEL]):
+            payload = {"model": model, "messages": messages, "max_tokens": max_tokens, "temperature": temperature}
+            if json_mode:
+                payload["response_format"] = {"type": "json_object"}
+            try:
+                resp = await client.post(
+                    f"{GROQ_BASE_URL}/chat/completions",
+                    headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+                    json=payload,
+                )
+                if resp.status_code >= 400:
+                    # Groq returns {"error": {"message": ...}} — keep it for the server log.
+                    try:
+                        detail = resp.json().get("error", {}).get("message", resp.text[:200])
+                    except ValueError:
+                        detail = resp.text[:200]
+                    last = f"HTTP {resp.status_code}: {detail}"
+                    logger.error("Groq request failed (model=%s): %s", model, last)
+                    if resp.status_code in (401, 403):
+                        break  # a different model won't fix a bad key
+                    continue
+                content = resp.json()["choices"][0]["message"]["content"]
+                if content and content.strip():
+                    return content.strip()
+                last = "empty completion"
+                logger.error("Groq returned an empty completion (model=%s)", model)
+            except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
+                last = f"{type(exc).__name__}: {exc}"
+                logger.error("Groq call error (model=%s): %s", model, last)
+    raise LLMError(last)
+
+
+async def call_llm_json(system_prompt: str, user_content: str, max_tokens: int = 700) -> dict:
+    raw = await call_llm(
+        [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_content}],
+        max_tokens=max_tokens, temperature=0.2, json_mode=True,
+    )
+    cleaned = raw.replace("```json", "").replace("```", "").strip()
     try:
-        c = await call_claude_json(SIGNAL_SYSTEM_PROMPT, [{"role": "user", "content": text}])
+        return json.loads(cleaned)
+    except json.JSONDecodeError as exc:
+        logger.error("Groq returned non-JSON analysis: %s", cleaned[:200])
+        raise LLMError("invalid JSON from model") from exc
+
+
+async def engine1(text: str, context: Optional[str] = None) -> dict:
+    """Engine 1 — LLM if available, lexicon otherwise. Always returns the
+    same shape as ai.scoring.analyze_text. `context` (earlier student turns in a
+    chat) lets the live signal follow the whole conversation, not one message."""
+    lex = analyze_text(text)
+    if not GROQ_API_KEY:
+        return lex
+    prompt = text
+    if context:
+        prompt = ("Earlier in this conversation the student said:\n" + context
+                  + "\n\nLatest message (analyse this, using the earlier turns for context):\n" + text)
+    try:
+        c = await call_llm_json(SIGNAL_SYSTEM_PROMPT, prompt)
         markers = dict(lex["markers"])
         for key in ("thought_loops", "catastrophizing", "helplessness", "self_blame"):
             if isinstance(c.get(key), list):
@@ -78,10 +132,10 @@ async def engine1(text: str) -> dict:
             "crisis": bool(c.get("crisis")) or lex["crisis"],
             "markers": markers,
             "summary": c.get("summary"),
-            "engine": "claude",
+            "engine": "groq",
         }
-    except (RuntimeError, httpx.HTTPError, json.JSONDecodeError, KeyError, ValueError, TypeError) as exc:
-        logger.warning("Claude analysis failed (%s) — using lexicon engine", exc)
+    except (LLMError, KeyError, ValueError, TypeError) as exc:
+        logger.warning("LLM analysis failed (%s) — using lexicon engine", exc)
         return lex
 
 
@@ -112,9 +166,10 @@ async def analyze_entry(
     stress_slider: Optional[float] = None,
     baseline: Optional[dict] = None,
     recent_scores: Sequence[float] = (),
+    context: Optional[str] = None,
 ) -> dict:
     """Full pipeline. Returns a flat dict ready to store + send to the client."""
-    analysis = await engine1(text)
+    analysis = await engine1(text, context)
     result = compute_rumination(analysis, stress_slider=stress_slider, baseline=baseline,
                                 recent_scores=recent_scores, text=text)
     score = result["score"]

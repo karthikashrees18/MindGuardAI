@@ -19,7 +19,7 @@ backend/
     ├── journal/           — journal CRUD + reports aggregation
     │   ├── models.py
     │   └── routes.py
-    ├── ai/                — Claude-powered chat + rumination/sentiment scoring
+    ├── ai/                — Groq-powered chat + rumination/sentiment scoring
     │   ├── models.py
     │   ├── scoring.py     — keyword-based fallback when no API key is set
     │   └── routes.py
@@ -47,7 +47,7 @@ at the same time with near-zero merge conflicts.
 pip install -r requirements.txt
 export MONGO_URI=mongodb://localhost:27017
 export JWT_SECRET=dev-secret
-export ANTHROPIC_API_KEY=sk-ant-...   # optional — ai/ falls back to keyword scoring without it
+export GROQ_API_KEY=gsk_...   # optional — ai/ falls back to keyword scoring without it
 uvicorn app.main:app --reload --port 8000
 ```
 

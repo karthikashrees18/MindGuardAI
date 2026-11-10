@@ -30,13 +30,14 @@ async def process_entry(
     mood: Optional[str] = None,
     stress_level: Optional[int] = None,
     source: str = "checkin",
+    context: Optional[str] = None,
 ) -> dict:
     user_id = user["_id"]
     baseline = user.get("baseline") or {}
     music_prefs = user.get("music") or {}
 
     history = await recent_scores(user_id)
-    analysis = await analyze_entry(text, stress_slider=stress_level, baseline=baseline, recent_scores=history)
+    analysis = await analyze_entry(text, stress_slider=stress_level, baseline=baseline, recent_scores=history, context=context)
 
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()

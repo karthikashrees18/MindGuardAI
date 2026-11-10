@@ -11,7 +11,7 @@ the evidence behind them:
                          catastrophising, self-blame, absolutist language,
                          thought-loop phrases, lexical repetition
 
-When ANTHROPIC_API_KEY is set, app/ai/analysis.py asks Claude for the same
+When GROQ_API_KEY is set, app/ai/analysis.py asks the Groq LLM for the same
 three signals instead; either way the numbers are handed to Engine 2
 (app/engine/rumination.py) which personalises them into the 0-100
 Rumination / Stress score. This module is also the fallback so the app is
