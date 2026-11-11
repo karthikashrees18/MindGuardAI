@@ -1,13 +1,22 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ShieldCheck, Download, Megaphone, Sun, Moon, LogOut, LayoutDashboard, HeartPulse, ArrowLeft } from "lucide-react";
-import { Aurora } from "../components/ui";
-import { GlobalStyle, DARK, LIGHT, GhostButton, PrimaryButton } from "./theme";
+import { Download, Megaphone, LayoutDashboard, HeartPulse, ArrowLeft } from "lucide-react";
+import { Aurora, PageHeader } from "../components/ui";
+import DashboardLayout from "../components/DashboardLayout";
+import { GlobalStyle, DARK, LIGHT, GhostButton } from "./theme";
 import { adminApi, saveAdminToken, getAdminToken, clearAdminToken } from "./api";
 import AdminLogin from "./AdminLogin";
 import AdminDashboard from "./AdminDashboard";
 import CounselorPortal from "./CounselorPortal";
 
 const THEME_KEY = "mg_theme";
+
+// Section links — same set for counselors and admins (the backend enforces access per endpoint).
+const NAV = [
+  { key: "portal", label: "Counselor Portal", subtitle: "Live triage queue", icon: HeartPulse },
+  { key: "analytics", label: "Cohort Analytics", subtitle: "Anonymized campus trends", icon: LayoutDashboard },
+];
+
+const ROLE_LABELS = { admin: "Administrator", counselor: "Counselor" };
 
 function readTheme() {
   try {
@@ -89,16 +98,19 @@ export default function AdminApp() {
     setShowBroadcast(true);
   };
 
-  const themeToggle = (
-    <button
-      type="button"
-      className="mga-icon-btn"
-      onClick={() => setMode((m) => (m === "dark" ? "light" : "dark"))}
-      aria-label={mode === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-      title={mode === "dark" ? "Light theme" : "Dark theme"}
-    >
-      {mode === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-    </button>
+  const toItem = ({ key, label, icon }) => ({ key, label, icon, active: tab === key, onSelect: () => setTab(key) });
+  const current = NAV.find((n) => n.key === tab) || NAV[0];
+
+  // Sidebar / drawer actions that sit below the section links (student Support slot).
+  const staffActions = (close) => (
+    <>
+      <button type="button" className="mg-nav-item" onClick={() => { openBroadcast(); close?.(); }}>
+        <Megaphone size={17} /> New broadcast
+      </button>
+      <a className="mg-nav-item" href="/#/home" style={{ textDecoration: "none" }}>
+        <ArrowLeft size={17} /> Exit to student view
+      </a>
+    </>
   );
 
   return (
@@ -125,41 +137,33 @@ export default function AdminApp() {
         </div>
       )}
       {stage === "app" && (
-        <div className="mga-shell">
-          <header className="mga-header">
-            <div className="brand">
-              <div className="brand-mark"><ShieldCheck size={20} /></div>
-              <div style={{ minWidth: 0 }}>
-                <div className="mg-h2">MindGuard AI — Campus Wellness &amp; Counselor Portal</div>
-                <div className="mg-small mg-muted">{tab === "portal" ? "Triage queue" : "Cohort analytics"} · Signed in as {actor?.name} · {actor?.role}</div>
-              </div>
-            </div>
-            <div className="actions">
-              {tab === "analytics" && (
-                <a href={adminApi.exportSummaryCsvUrl(period)} style={{ textDecoration: "none" }}>
-                  <GhostButton><Download size={14} /> Export CSV</GhostButton>
-                </a>
-              )}
-              <PrimaryButton grad={t.lavenderGrad} onClick={openBroadcast} style={{ padding: "8px 14px", fontSize: 12.5 }}>
-                <Megaphone size={14} /> New broadcast
-              </PrimaryButton>
-              {themeToggle}
-              <a href="/#/home" style={{ textDecoration: "none" }}>
-                <GhostButton><ArrowLeft size={14} /> Exit to Student View</GhostButton>
+        <DashboardLayout
+          nav={NAV.map(toItem)}
+          tabs={NAV.map(toItem)}
+          tabbarExtra={(
+            <button type="button" className="mg-tab" onClick={openBroadcast}>
+              <Megaphone size={20} />Broadcast
+            </button>
+          )}
+          sidebarActions={staffActions()}
+          menuActions={(close) => staffActions(close)}
+          theme={mode}
+          onToggleTheme={() => setMode((m) => (m === "dark" ? "light" : "dark"))}
+          account={{ initialsFrom: actor?.name, name: actor?.name, subtitle: ROLE_LABELS[actor?.role] || actor?.role }}
+          onLogout={handleLogout}
+          title={current.label}
+          contentKey={tab}
+        >
+          <PageHeader
+            eyebrow="Campus Wellness & Counselor Portal"
+            title={current.label}
+            subtitle={`${current.subtitle} · Signed in as ${actor?.name} · ${actor?.role}`}
+            actions={tab === "analytics" && (
+              <a href={adminApi.exportSummaryCsvUrl(period)} style={{ textDecoration: "none" }}>
+                <GhostButton><Download size={14} /> Export CSV</GhostButton>
               </a>
-              <GhostButton onClick={handleLogout}><LogOut size={14} /> Log out</GhostButton>
-            </div>
-          </header>
-
-          <nav className="mga-nav" aria-label="Sections">
-            <button type="button" className={tab === "portal" ? "on" : ""} aria-current={tab === "portal" ? "page" : undefined} onClick={() => setTab("portal")}>
-              <HeartPulse size={15} /> Counselor Portal
-            </button>
-            <button type="button" className={tab === "analytics" ? "on" : ""} aria-current={tab === "analytics" ? "page" : undefined} onClick={() => setTab("analytics")}>
-              <LayoutDashboard size={15} /> Cohort Analytics
-            </button>
-          </nav>
-
+            )}
+          />
           {tab === "portal" ? (
             <CounselorPortal onUnauthorized={handleLogout} />
           ) : (
@@ -171,7 +175,7 @@ export default function AdminApp() {
               setShowBroadcastModal={setShowBroadcast}
             />
           )}
-        </div>
+        </DashboardLayout>
       )}
     </div>
   );
