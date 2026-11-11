@@ -1,16 +1,7 @@
 /* Admin / counselor app — layered on top of src/styles.css */
 
-.mga-shell { max-width: 1280px; margin: 0 auto; padding: 22px 28px 60px; }
-
-.mga-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
-.mga-header .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.mga-header .brand-mark { width: 40px; height: 40px; border-radius: 13px; background: var(--grad-brand); display: grid; place-items: center; color: #fff; flex-shrink: 0; box-shadow: var(--shadow-glow); }
-.mga-header .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-
-.mga-nav { display: inline-flex; gap: 4px; padding: 4px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 20px; max-width: 100%; overflow-x: auto; }
-.mga-nav button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--text-2); font: inherit; font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 12px; cursor: pointer; white-space: nowrap; transition: background .2s, color .2s; }
-.mga-nav button:hover { color: var(--text); }
-.mga-nav button.on { background: var(--violet-soft); color: var(--lavender); box-shadow: inset 0 0 0 1px var(--violet); }
+/* Page chrome (sidebar, top bar, tab bar, content width) comes from the shared
+   DashboardLayout + .mg-app/.mg-side/.mg-content rules in src/styles.css. */
 
 .mga-icon-btn { width: 36px; height: 36px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); display: grid; place-items: center; cursor: pointer; transition: background .2s, border-color .2s; flex-shrink: 0; }
 .mga-icon-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
@@ -77,12 +68,10 @@
   .mga-case { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
-  .mga-shell { padding: 16px 14px 48px; }
   .mga-case { grid-template-columns: 1fr; gap: 10px; padding: 14px; }
   .mga-drawer { width: 100vw; border-left: 0; }
   .mga-tile { padding: 13px 14px; }
   .mga-tile .n { font-size: 26px; }
-  .mga-header .actions .hide-sm { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .mga-case.fresh, .mga-drawer, .mga-drawer-scrim { animation: none; }
@@ -181,6 +170,9 @@
   .mga-case { grid-template-columns: 1fr 1fr; }
   .mga-case-actions { flex-direction: row; flex-wrap: wrap; grid-column: 1 / -1; }
 }
+@media (max-width: 900px) {
+  .mga-toolbar { top: 72px; }
+}
 @media (max-width: 640px) {
   .mga-toolbar { position: static; }
   .mga-search { max-width: none; }
@@ -192,7 +184,7 @@
   .mga-live-dot, .mga-pulse, .mga-spin, .mga-queue .mga-row-in { animation: none; }
 }
 @media print {
-  .mga-toolbar, .mga-nav, .mga-header .actions, .mga-case-actions, .mga-drawer, .mga-drawer-scrim, .mga-tabs { display: none !important; }
-  .mga-shell { padding: 0; max-width: none; }
+  .mga-toolbar, .mg-side, .mg-topbar, .mg-tabbar, .mga-case-actions, .mga-drawer, .mga-drawer-scrim, .mga-tabs { display: none !important; }
+  .mg-content { padding: 0; max-width: none; }
   .mga-case, .mga-kpi, .mga-panel { break-inside: avoid; }
 }
