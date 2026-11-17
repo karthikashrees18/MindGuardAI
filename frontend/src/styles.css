@@ -159,6 +159,7 @@ a { color: var(--violet); }
 .mg-nav-item.active { background: var(--violet-soft); color: var(--lavender); font-weight: 700; box-shadow: inset 0 0 0 1px var(--border); }
 :root[data-theme="light"] .mg-nav-item.active { color: var(--violet-deep); }
 .mg-nav-item.sos { border: 1px solid rgba(255, 155, 148, 0.4); background: var(--coral-soft); color: var(--coral); font-weight: 700; }
+.mg-nav-badge { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--coral); color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; }
 .mg-nav-item .dot { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--coral); animation: mg-pulse-ring 1.8s infinite; }
 .mg-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .mg-content { flex: 1; width: 100%; max-width: 1140px; margin: 0 auto; padding: 30px 32px 56px; }
@@ -343,6 +344,50 @@ a { color: var(--violet); }
 .mg-bubble { max-width: 78%; padding: 11px 15px; border-radius: 18px; font-size: 13.5px; white-space: pre-wrap; line-height: 1.55; animation: mg-fade-up 0.3s both; }
 .mg-bubble.user { align-self: flex-end; background: var(--grad-brand); color: #fff; border-bottom-right-radius: 5px; }
 .mg-bubble.ai { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--border); border-bottom-left-radius: 5px; }
+
+/* ---- direct messages (components/Messenger.jsx; student app + counselor dashboard) ---- */
+.mg-dm {
+  display: grid; grid-template-columns: 320px minmax(0, 1fr); height: min(720px, calc(100vh - 190px)); min-height: 480px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 22px; overflow: hidden;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+.mg-dm-list { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--border); }
+.mg-dm-list-head { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-bottom: 1px solid var(--border); }
+.mg-dm-search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-3); }
+.mg-dm-search:focus-within { border-color: var(--violet); }
+.mg-dm-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 13.5px; }
+.mg-dm-list-head .mg-chip { padding: 5px 11px; font-size: 12px; }
+.mg-dm-contacts { flex: 1; overflow-y: auto; padding: 6px; }
+.mg-dm-contact {
+  display: flex; align-items: center; gap: 11px; width: 100%; padding: 10px; border: 0; border-radius: 14px; background: transparent;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: background .15s;
+}
+.mg-dm-contact:hover { background: var(--surface-2); }
+.mg-dm-contact.active { background: var(--violet-soft); box-shadow: inset 0 0 0 1px var(--border); }
+.mg-dm-avatar {
+  width: 38px; height: 38px; flex-shrink: 0; border-radius: 13px; display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; color: #fff; background: var(--grad-brand);
+}
+.mg-dm-avatar.staff { background: var(--grad-teal); color: var(--on-accent); }
+.mg-dm-name { font-size: 13.5px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.mg-dm-preview { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.mg-dm-badge { flex-shrink: 0; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--coral); color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; }
+.mg-dm-thread { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.mg-dm-empty { flex: 1; display: grid; place-items: center; padding: 20px; }
+.mg-dm-thread-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.mg-dm-back { display: none; padding: 6px; }
+.mg-dm-messages { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.mg-dm-time { display: block; margin-top: 4px; font-size: 10.5px; opacity: .7; text-align: right; }
+.mg-dm-compose { padding: 12px 14px; border-top: 1px solid var(--border); }
+
+@media (max-width: 900px) {
+  .mg-dm { grid-template-columns: 1fr; height: calc(100vh - 250px); min-height: 420px; }
+  .mg-dm-list { border-right: 0; }
+  .mg-dm.has-thread .mg-dm-list { display: none; }
+  .mg-dm:not(.has-thread) .mg-dm-thread { display: none; }
+  .mg-dm-back { display: inline-flex; }
+  .mg-dm-act-label { display: none; }
+}
 .mg-typing { display: inline-flex; gap: 4px; } .mg-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); animation: mg-float 1s infinite; } .mg-typing i:nth-child(2) { animation-delay: .15s; } .mg-typing i:nth-child(3) { animation-delay: .3s; }
 
 /* ---- games ---------------------------------------------------------------------------------------- */

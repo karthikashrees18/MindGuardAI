@@ -3,11 +3,13 @@
 import React from "react";
 import {
   BarChart3, BookHeart, Flower2, Gamepad2, HeartHandshake, Home, LifeBuoy, MessageCircle,
-  Sparkles, User, Wind,
+  MessagesSquare, Sparkles, User, Wind,
 } from "lucide-react";
 import { useApp } from "../lib/store";
 import { navigate } from "../lib/router";
 import { displayName } from "../lib/constants";
+import { messagesApi } from "../api";
+import useUnreadMessages from "../lib/useUnreadMessages";
 import { Aurora } from "./ui";
 import DashboardLayout from "./DashboardLayout";
 
@@ -15,6 +17,7 @@ const NAV = [
   { path: "/home", label: "Home", icon: Home },
   { path: "/checkin", label: "Check-in", icon: BookHeart },
   { path: "/chat", label: "AI companion", icon: MessageCircle },
+  { path: "/messages", label: "Messages", icon: MessagesSquare },
   { path: "/calm", label: "Calm space", icon: Wind },
   { path: "/games", label: "Mini-games", icon: Gamepad2 },
   { path: "/garden", label: "Wellness garden", icon: Flower2 },
@@ -25,10 +28,10 @@ const NAV = [
 // screen, never from the student navigation.
 export const COUNSELOR_URL = "/admin.html";
 
-const TABS = [NAV[0], NAV[1], NAV[3], NAV[4]];
+const TABS = ["/home", "/checkin", "/calm", "/games"].map((p) => NAV.find((n) => n.path === p));
 
 const TITLES = {
-  "/home": "Home", "/checkin": "Check-in", "/chat": "AI companion", "/calm": "Calm space", "/games": "Mini-games",
+  "/home": "Home", "/checkin": "Check-in", "/chat": "AI companion", "/messages": "Messages", "/calm": "Calm space", "/games": "Mini-games",
   "/games/bubble": "Zen Bubble Pop", "/games/reframe": "Thought Reframe", "/garden": "Wellness garden",
   "/reports": "Reports", "/support": "Support", "/profile": "Profile", "/onboarding": "Personalise",
 };
@@ -55,6 +58,9 @@ export default function Shell({ path, children }) {
   const flagged = !!(supportFlag && supportFlag.show_prompt);
   const needsOnboarding = user && !user.onboarding_complete && path !== "/onboarding";
 
+  // Re-checked on navigation too, so the badge clears after reading messages.
+  const unread = useUnreadMessages(messagesApi, !!user && path !== "/messages");
+
   const logout = () => { signOut(); navigate("/"); };
 
   const banner = needsOnboarding && (
@@ -78,7 +84,7 @@ export default function Shell({ path, children }) {
     <>
     <Aurora />
     <DashboardLayout
-      nav={NAV.map(toItem(path))}
+      nav={NAV.map(toItem(path)).map((n) => (n.key === "/messages" ? { ...n, badge: unread } : n))}
       tabs={TABS.map(toItem(path))}
       tabbarExtra={supportTab}
       sidebarActions={<SosButton path={path} flagged={flagged} />}

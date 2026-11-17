@@ -21,6 +21,7 @@ from app.demo.seed import ensure_demo_data
 from app.escalation.routes import router as support_router
 from app.interventions.routes import router as interventions_router
 from app.journal.routes import router as journal_router
+from app.messages.routes import router as messages_router
 from app.music.routes import router as music_router
 from app.notifications.routes import router as notifications_router
 from app.wellness.routes import router as wellness_router
@@ -60,6 +61,7 @@ app.include_router(support_router)
 app.include_router(counselor_router)
 app.include_router(wellness_router)
 app.include_router(demo_router)
+app.include_router(messages_router)
 
 
 @app.get("/health")

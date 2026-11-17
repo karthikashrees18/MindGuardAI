@@ -22,6 +22,7 @@ const BubblePop = lazy(() => import("./pages/games/BubblePop"));
 const Reframe = lazy(() => import("./pages/games/Reframe"));
 const GardenPage = lazy(() => import("./pages/GardenPage"));
 const Reports = lazy(() => import("./pages/Reports"));
+const Messages = lazy(() => import("./pages/Messages"));
 
 const PUBLIC = ["/", "/login", "/signup"];
 
@@ -32,6 +33,7 @@ const PRIVATE_ROUTES = {
   "/home": Home,
   "/checkin": CheckIn,
   "/chat": Chat,
+  "/messages": Messages,
   "/calm": CalmSpace,
   "/games": Games,
   "/games/bubble": BubblePop,

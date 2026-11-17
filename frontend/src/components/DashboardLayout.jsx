@@ -18,7 +18,7 @@ export function Brand({ label = "Mind Guard AI" }) {
 }
 
 /**
- * @param nav          [{ key, label, icon, active, onSelect }] — sidebar + drawer links
+ * @param nav          [{ key, label, icon, active, onSelect, badge? }] — sidebar + drawer links
  * @param tabs         same shape, optional `short` label — mobile bottom tab bar
  * @param tabbarExtra  extra node appended to the tab bar
  * @param sidebarActions node rendered below the spacer, above the theme toggle
@@ -52,9 +52,10 @@ export default function DashboardLayout({
     <div className="mg-app">
       <aside className="mg-side" aria-label="Main navigation">
         <Brand label={brandLabel} />
-        {nav.map(({ key, label, icon: Icon, active, onSelect }) => (
+        {nav.map(({ key, label, icon: Icon, active, onSelect, badge }) => (
           <button key={key} className={`mg-nav-item ${active ? "active" : ""}`} onClick={onSelect} aria-current={active ? "page" : undefined}>
             <Icon size={17} /> {label}
+            {badge > 0 && <span className="mg-nav-badge" aria-label={`${badge} unread`}>{badge > 99 ? "99+" : badge}</span>}
           </button>
         ))}
         <div style={{ flex: 1 }} />
@@ -103,8 +104,11 @@ export default function DashboardLayout({
           <div className="mg-modal" style={{ borderRadius: 0, height: "100%", maxHeight: "none", width: 280, maxWidth: "85vw", animation: "mg-fade-up .25s both" }}>
             <div className="mg-row mg-between"><Brand label={brandLabel} /><button className="mg-btn quiet" onClick={closeMenu} aria-label="Close menu"><X size={18} /></button></div>
             <div className="mg-stack-sm">
-              {nav.map(({ key, label, icon: Icon, active, onSelect }) => (
-                <button key={key} className={`mg-nav-item ${active ? "active" : ""}`} onClick={onSelect}><Icon size={17} /> {label}</button>
+              {nav.map(({ key, label, icon: Icon, active, onSelect, badge }) => (
+                <button key={key} className={`mg-nav-item ${active ? "active" : ""}`} onClick={onSelect}>
+                  <Icon size={17} /> {label}
+                  {badge > 0 && <span className="mg-nav-badge" aria-label={`${badge} unread`}>{badge > 99 ? "99+" : badge}</span>}
+                </button>
               ))}
               {menuActions?.(closeMenu)}
               <button className="mg-nav-item" onClick={onLogout}><LogOut size={17} /> Log out</button>
