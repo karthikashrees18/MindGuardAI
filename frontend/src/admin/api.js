@@ -72,6 +72,18 @@ export const counselorApi = {
     }),
 };
 
+// In-app direct messages — same shape as `messagesApi` in ../api.js.
+const enc = encodeURIComponent;
+export const messagesApi = {
+  contacts: () => request("/api/messages/contacts"),
+  unread: () => request("/api/messages/unread"),
+  thread: (userId) => request(`/api/messages/thread/${enc(userId)}`),
+  send: (userId, text) => request(`/api/messages/thread/${enc(userId)}`, { method: "POST", body: JSON.stringify({ text }) }),
+  block: (userId) => request(`/api/messages/block/${enc(userId)}`, { method: "POST" }),
+  unblock: (userId) => request(`/api/messages/block/${enc(userId)}`, { method: "DELETE" }),
+  report: (userId, reason) => request(`/api/messages/report/${enc(userId)}`, { method: "POST", body: JSON.stringify({ reason }) }),
+};
+
 export function saveAdminToken(token) {
   localStorage.setItem("mga_admin_token", token);
 }

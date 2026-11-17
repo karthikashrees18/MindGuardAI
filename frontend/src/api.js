@@ -4,7 +4,10 @@
 
 export const API_BASE = (import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? "http://localhost:8000" : "")).replace(/\/$/, "");
 
-const TOKEN_KEY = "mga_token";
+export const TOKEN_KEY = "mga_token";
+// Fired when the server rejects our token (signed out / replaced in another tab,
+// or expired). The store listens and returns the user to sign in.
+export const SESSION_LOST_EVENT = "mg:session-lost";
 
 export function getToken() {
   try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
@@ -39,6 +42,10 @@ async function request(path, options = {}) {
     throw new ApiError("Can't reach the Mind Guard server. Is the backend running on " + API_BASE + "?", 0);
   }
   if (!res.ok) {
+    if (res.status === 401 && !path.startsWith("/api/auth/login")) {
+      clearToken();
+      window.dispatchEvent(new Event(SESSION_LOST_EVENT));
+    }
     let detail = res.statusText;
     try {
       const body = await res.json();
@@ -54,6 +61,19 @@ async function request(path, options = {}) {
 
 const post = (path, body) => request(path, { method: "POST", body: JSON.stringify(body ?? {}) });
 const put = (path, body) => request(path, { method: "PUT", body: JSON.stringify(body ?? {}) });
+const del = (path) => request(path, { method: "DELETE" });
+
+// In-app direct messages. Same shape as `messagesApi` in src/admin/api.js so the
+// shared <Messenger> component works with either app's token.
+export const messagesApi = {
+  contacts: () => request("/api/messages/contacts"),
+  unread: () => request("/api/messages/unread"),
+  thread: (userId) => request(`/api/messages/thread/${encodeURIComponent(userId)}`),
+  send: (userId, text) => post(`/api/messages/thread/${encodeURIComponent(userId)}`, { text }),
+  block: (userId) => post(`/api/messages/block/${encodeURIComponent(userId)}`),
+  unblock: (userId) => del(`/api/messages/block/${encodeURIComponent(userId)}`),
+  report: (userId, reason) => post(`/api/messages/report/${encodeURIComponent(userId)}`, { reason }),
+};
 
 export const api = {
   // ---- auth / onboarding -------------------------------------------------

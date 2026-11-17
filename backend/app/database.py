@@ -37,6 +37,14 @@ engagement_events = db["engagement_events"]
 warning_flags = db["warning_flags"]
 game_events = db["game_events"]
 
+# --- In-app messaging (app/messages) ----------------------------------------
+# direct_messages: one doc per message; `pair` is the two user ids sorted and
+#   joined with "|" so a conversation is a single indexed lookup.
+# blocks: {blocker_id, blocked_id}. reports: user reports for staff review.
+direct_messages = db["direct_messages"]
+blocks = db["blocks"]
+reports = db["reports"]
+
 
 async def ensure_indexes():
     """Idempotent; called on startup. Mirrors database/init/init-mongo.js so a
@@ -46,3 +54,6 @@ async def ensure_indexes():
     await contacts.create_index("user_id")
     await warning_flags.create_index([("user_id", 1), ("status", 1)])
     await game_events.create_index([("user_id", 1), ("created_at", -1)])
+    await direct_messages.create_index([("pair", 1), ("created_at", -1)])
+    await direct_messages.create_index([("to_id", 1), ("read_at", 1)])
+    await blocks.create_index([("blocker_id", 1), ("blocked_id", 1)], unique=True)

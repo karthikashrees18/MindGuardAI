@@ -31,4 +31,14 @@ db.warning_flags.createIndex({ user_id: 1, status: 1 });
 db.createCollection("game_events");
 db.game_events.createIndex({ user_id: 1, created_at: -1 });
 
+// --- In-app messaging ---
+db.createCollection("direct_messages");
+db.direct_messages.createIndex({ pair: 1, created_at: -1 });
+db.direct_messages.createIndex({ to_id: 1, read_at: 1 });
+
+db.createCollection("blocks");
+db.blocks.createIndex({ blocker_id: 1, blocked_id: 1 }, { unique: true });
+
+db.createCollection("reports");
+
 print("mindguard: collections + indexes ready");

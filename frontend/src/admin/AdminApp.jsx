@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Download, Megaphone, LayoutDashboard, HeartPulse, ArrowLeft } from "lucide-react";
+import { Download, Megaphone, LayoutDashboard, HeartPulse, ArrowLeft, MessagesSquare } from "lucide-react";
 import { Aurora, PageHeader } from "../components/ui";
 import DashboardLayout from "../components/DashboardLayout";
+import Messenger from "../components/Messenger";
+import useUnreadMessages from "../lib/useUnreadMessages";
 import { GlobalStyle, DARK, LIGHT, GhostButton } from "./theme";
-import { adminApi, saveAdminToken, getAdminToken, clearAdminToken } from "./api";
+import { adminApi, messagesApi, saveAdminToken, getAdminToken, clearAdminToken } from "./api";
 import AdminLogin from "./AdminLogin";
 import AdminDashboard from "./AdminDashboard";
 import CounselorPortal from "./CounselorPortal";
@@ -14,6 +16,7 @@ const THEME_KEY = "mg_theme";
 const NAV = [
   { key: "portal", label: "Counselor Portal", subtitle: "Live triage queue", icon: HeartPulse },
   { key: "analytics", label: "Cohort Analytics", subtitle: "Anonymized campus trends", icon: LayoutDashboard },
+  { key: "messages", label: "Messages", subtitle: "Direct messages with students and staff", icon: MessagesSquare },
 ];
 
 const ROLE_LABELS = { admin: "Administrator", counselor: "Counselor" };
@@ -98,7 +101,10 @@ export default function AdminApp() {
     setShowBroadcast(true);
   };
 
-  const toItem = ({ key, label, icon }) => ({ key, label, icon, active: tab === key, onSelect: () => setTab(key) });
+  const unread = useUnreadMessages(messagesApi, stage === "app" && tab !== "messages");
+  const toItem = ({ key, label, icon }) => ({
+    key, label, icon, active: tab === key, onSelect: () => setTab(key), badge: key === "messages" ? unread : 0,
+  });
   const current = NAV.find((n) => n.key === tab) || NAV[0];
 
   // Sidebar / drawer actions that sit below the section links (student Support slot).
@@ -164,7 +170,9 @@ export default function AdminApp() {
               </a>
             )}
           />
-          {tab === "portal" ? (
+          {tab === "messages" ? (
+            <Messenger client={messagesApi} />
+          ) : tab === "portal" ? (
             <CounselorPortal onUnauthorized={handleLogout} />
           ) : (
             <AdminDashboard

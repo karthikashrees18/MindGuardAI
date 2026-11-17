@@ -1,7 +1,7 @@
 // Global app state: auth, theme, toasts, and the "live wellness" state that
 // several screens share (latest check-in result, garden, early-warning flag).
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { api, clearToken, getToken, saveToken } from "../api";
+import { api, clearToken, getToken, saveToken, SESSION_LOST_EVENT, TOKEN_KEY } from "../api";
 
 const AppContext = createContext(null);
 
@@ -22,6 +22,8 @@ export function AppProvider({ children }) {
   const [latest, setLatest] = useState(null); // last check-in result { analysis, interventions, early_warning, entry }
   const [toasts, setToasts] = useState([]);
   const toastId = useRef(0);
+  const userRef = useRef(null);
+  userRef.current = user;
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -73,6 +75,29 @@ export function AppProvider({ children }) {
       .finally(() => alive && setBooting(false));
     return () => { alive = false; };
   }, [adopt]);
+
+  // Keep this tab in step with the session. The token lives in localStorage, which every
+  // tab shares: signing out or into another account in one tab must not leave this tab
+  // showing the old student while sending no (or someone else's) token.
+  useEffect(() => {
+    const lost = () => {
+      if (userRef.current) toast("You were signed out (maybe in another tab). Please sign in again.", { type: "warn" });
+      setUser(null);
+      resetLive();
+    };
+    const onStorage = (e) => {
+      if (e.key !== null && e.key !== TOKEN_KEY) return;
+      if (!getToken()) { lost(); return; }
+      resetLive();
+      api.me().then(adopt).catch(lost);
+    };
+    window.addEventListener(SESSION_LOST_EVENT, lost);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(SESSION_LOST_EVENT, lost);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [adopt, resetLive, toast]);
 
   // Load shared live state whenever a student is signed in.
   useEffect(() => {
