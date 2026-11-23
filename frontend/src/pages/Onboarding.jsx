@@ -1,3 +1,4 @@
+import CustomPlaylist from "../components/CustomPlaylist";
 import React, { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 import { Aurora, Button } from "../components/ui";
@@ -111,6 +112,8 @@ export default function Onboarding() {
             submitLabel="Finish setup"
             onSubmit={save}
           />
+          <hr className="mg-divider" style={{ margin: "20px 0" }} />
+          <CustomPlaylist compact />
           <div style={{ textAlign: "center", marginTop: 14 }}>
             <button type="button" className="mg-btn quiet sm" onClick={() => navigate("/home")}>Skip for now</button>
           </div>

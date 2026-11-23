@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 
 from app.auth.utils import require_role
 from app.config import ANOMALY_CHANGE_THRESHOLD_PERCENT, K_ANONYMITY_THRESHOLD
-from app.database import audit_logs, broadcasts, engagement_events, journals, users
+from app.database import audit_logs, broadcasts, db, engagement_events, journals, users
 
 from app.admin.aggregation import (
     Period, STRESS_FACTOR_KEYWORDS, TIER_LABELS,
@@ -347,3 +347,55 @@ async def get_audit_log(limit: int = 50, user=Depends(require_role("admin"))):
         doc.pop("_id", None)
         out.append(doc)
     return out
+
+
+# --- Read-only database viewer (live demos) ----------------------------------
+# Credentials / secrets are dropped entirely. Free-text a student wrote
+# (journal text, messages, counselor notes ...) is replaced with a placeholder so
+# this view keeps the same promise the Profile page makes: staff never read a
+# student's own words. Emails and phone numbers are partially masked.
+_DROP_KEYS = {"password", "password_hash", "hashed_password", "token", "access_token", "secret", "jwt"}
+_HIDE_KEYS = {"text", "note", "notes", "body", "content", "message", "excerpt", "reason",
+              "encrypted_text", "ciphertext", "contact_detail", "ai_reply", "reply"}
+
+
+def _mask_email(v: str) -> str:
+    if "@" not in v:
+        return "***"
+    name, domain = v.split("@", 1)
+    return f"{name[:1]}***@{domain}"
+
+
+def _sanitize(value, key: str = ""):
+    k = key.lower()
+    if isinstance(value, dict):
+        return {ik: _sanitize(iv, ik) for ik, iv in value.items() if ik.lower() not in _DROP_KEYS}
+    if isinstance(value, list):
+        return [_sanitize(v, key) for v in value[:20]]
+    if k in _HIDE_KEYS and value not in (None, ""):
+        return "[hidden]"
+    if isinstance(value, str):
+        if k == "email" or k.endswith("_email"):
+            return _mask_email(value)
+        if "phone" in k:
+            return f"***{value[-3:]}" if len(value) > 3 else "***"
+        return value[:300]
+    if isinstance(value, (int, float, bool)) or value is None:
+        return value
+    return str(value)
+
+
+@router.get("/db-overview")
+async def db_overview(user=Depends(require_role("admin", "counselor"))):
+    """Collections, document counts and the 10 newest documents of each  - 
+    sanitized, read-only. Counselor/admin only."""
+    names = sorted(await db.list_collection_names())
+    out = []
+    for name in names:
+        if name.startswith("system."):
+            continue
+        col = db[name]
+        docs = [_sanitize(d) async for d in col.find({}).sort("$natural", -1).limit(10)]
+        out.append({"name": name, "count": await col.count_documents({}), "recent": docs})
+    await _log_access(user, "/api/admin/db-overview", {})
+    return {"database": db.name, "collections": out}

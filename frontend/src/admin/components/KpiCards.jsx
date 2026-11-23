@@ -36,7 +36,7 @@ export default function KpiCards({ ov, tab, onPick }) {
         value={ov?.stable.count} pct={ov?.stable.pct}
         sub={ov && `${ov.stable.count} of ${ov.monitored} students stable (${ov.stable.pct}%)`} delta={ov && "Doing well"}
         onClick={() => toggle("stable")} />
-      <Kpi cls="connect" icon={MessageCircle} label="Open connect requests" loading={loading} active={tab === "connect"}
+      <Kpi cls="connect" icon={MessageCircle} label="Open requests to talk" loading={loading} active={tab === "connect"}
         value={ov?.connect_requests.count} pct={ov?.connect_requests.pct} pulse={!!ov?.connect_requests.count}
         sub={ov && (ov.connect_requests.count ? "Students asking for a 1-on-1" : "No pending requests")}
         delta={ov && (ov.connect_requests.count ? "Respond soon" : "All clear")}

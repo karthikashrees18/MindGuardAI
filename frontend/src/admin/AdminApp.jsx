@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Download, Megaphone, LayoutDashboard, HeartPulse, ArrowLeft, MessagesSquare } from "lucide-react";
+import { Download, Megaphone, LayoutDashboard, HeartPulse, ArrowLeft, MessagesSquare, Code2 } from "lucide-react";
 import { Aurora, PageHeader } from "../components/ui";
 import DashboardLayout from "../components/DashboardLayout";
 import Messenger from "../components/Messenger";
@@ -9,14 +9,16 @@ import { adminApi, messagesApi, saveAdminToken, getAdminToken, clearAdminToken }
 import AdminLogin from "./AdminLogin";
 import AdminDashboard from "./AdminDashboard";
 import CounselorPortal from "./CounselorPortal";
+import DevTools from "./DevTools";
 
 const THEME_KEY = "mg_theme";
 
 // Section links — same set for counselors and admins (the backend enforces access per endpoint).
 const NAV = [
   { key: "portal", label: "Counselor Portal", subtitle: "Live list of students who may need support", icon: HeartPulse },
-  { key: "analytics", label: "Student Group Insights", subtitle: "Anonymous campus trends", icon: LayoutDashboard },
+  { key: "analytics", label: "Student Group Insights", subtitle: "Campus-wide trends, with no names", icon: LayoutDashboard },
   { key: "messages", label: "Messages", subtitle: "Direct messages with students and staff", icon: MessagesSquare },
+  { key: "dev", label: "Developer Tools", subtitle: "API reference and live database viewer", icon: Code2 },
 ];
 
 const ROLE_LABELS = { admin: "Administrator", counselor: "Counselor" };
@@ -172,6 +174,8 @@ export default function AdminApp() {
           />
           {tab === "messages" ? (
             <Messenger client={messagesApi} />
+          ) : tab === "dev" ? (
+            <DevTools />
           ) : tab === "portal" ? (
             <CounselorPortal onUnauthorized={handleLogout} />
           ) : (

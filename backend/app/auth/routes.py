@@ -5,9 +5,10 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from app.database import users, contacts
 from app.auth.models import (
-    BaselineProfile, LoginRequest, MusicPreferences, OnboardingUpdate,
+    BaselineProfile, LoginRequest, MusicPreferences, OnboardingUpdate, ProfileUpdate,
     SignupRequest, TokenResponse, UserOut,
 )
+from app.music.catalog import parse_spotify_playlist
 from app.auth.utils import hash_password, verify_password, create_token, get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -77,6 +78,18 @@ async def login(body: LoginRequest):
     return TokenResponse(access_token=create_token(user["_id"]))
 
 
+async def user_out_full(user: dict) -> UserOut:
+    """user_out plus the trusted-person contact (stored in `contacts`)."""
+    out = user_out(user)
+    peer = await contacts.find_one({"user_id": user["_id"], "role": "peer"})
+    if peer:
+        out.peer_contact = {
+            "full_name": peer.get("name"), "relationship": peer.get("relationship"),
+            "phone_number": peer.get("phone_number"), "email": peer.get("email"),
+        }
+    return out
+
+
 def user_out(user: dict) -> UserOut:
     profile = user.get("profile") or {}
     preferences = user.get("preferences") or {}
@@ -94,12 +107,18 @@ def user_out(user: dict) -> UserOut:
         music=MusicPreferences(**music) if music else None,
         onboarding_complete=bool(user.get("onboarding_complete")),
         is_demo=bool(user.get("is_demo")),
+        department=profile.get("department"),
+        year_of_study=profile.get("year_of_study"),
+        privacy_consent=bool(preferences.get("privacy_consent")),
+        crisis_consent=bool(preferences.get("crisis_consent")),
+        custom_playlist=user.get("custom_playlist") or None,
+        created_at=user.get("created_at"),
     )
 
 
 @router.get("/me", response_model=UserOut)
 async def me(user=Depends(get_current_user)):
-    return user_out(user)
+    return await user_out_full(user)
 
 
 @router.put("/onboarding", response_model=UserOut)
@@ -120,3 +139,56 @@ async def update_onboarding(body: OnboardingUpdate, user=Depends(get_current_use
         await users.update_one({"_id": user["_id"]}, {"$set": updates})
         user = await users.find_one({"_id": user["_id"]})
     return user_out(user)
+
+
+@router.put("/profile", response_model=UserOut)
+async def update_profile(body: ProfileUpdate, user=Depends(get_current_user)):
+    """Edit the details collected at sign-up (and the custom Spotify playlist).
+    Email and role cannot be changed here. Only the fields sent are updated."""
+    sent = body.model_dump(exclude_unset=True)
+    updates: dict = {}
+    if "name" in sent and sent["name"] is not None:
+        updates["name"] = sent["name"].strip()
+    for key in ("preferred_name", "institution", "department", "year_of_study"):
+        if key in sent and sent[key] is not None:
+            updates[f"profile.{key}"] = sent[key].strip() or None
+    if "profile.institution" in updates and not updates["profile.institution"]:
+        raise HTTPException(status_code=422, detail="Institution can't be empty.")
+    if sent.get("checkin_time") is not None:
+        updates["preferences.checkin_time"] = sent["checkin_time"] or None
+    for key in ("privacy_consent", "crisis_consent"):
+        if sent.get(key) is not None:
+            updates[f"preferences.{key}"] = bool(sent[key])
+    if "custom_playlist" in sent and sent["custom_playlist"] is not None:
+        raw = sent["custom_playlist"].strip()
+        if raw:
+            pid = parse_spotify_playlist(raw)
+            if not pid:
+                raise HTTPException(status_code=422, detail="That doesn't look like a Spotify playlist link.")
+            updates["custom_playlist"] = pid
+        else:
+            updates["custom_playlist"] = None
+
+    peer = sent.get("peer_contact")
+    if peer is not None:
+        name = (peer.get("full_name") or "").strip()
+        phone = (peer.get("phone_number") or "").strip()
+        if not name and not phone:
+            await contacts.delete_many({"user_id": user["_id"], "role": "peer"})
+        else:
+            if not (name and phone):
+                raise HTTPException(status_code=422, detail="A trusted person needs both a name and a phone number.")
+            await contacts.update_one(
+                {"user_id": user["_id"], "role": "peer"},
+                {"$set": {
+                    "name": name, "phone_number": phone,
+                    "relationship": (peer.get("relationship") or "").strip() or None,
+                    "email": (peer.get("email") or "").strip() or None,
+                }},
+                upsert=True,
+            )
+
+    if updates:
+        await users.update_one({"_id": user["_id"]}, {"$set": updates})
+        user = await users.find_one({"_id": user["_id"]})
+    return await user_out_full(user)

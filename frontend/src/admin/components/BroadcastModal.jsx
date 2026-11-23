@@ -47,7 +47,7 @@ export default function BroadcastModal({ t, onClose, onSubmit }) {
           </div>
 
           <div style={{ fontSize: 11.5, color: t.textSecondary, lineHeight: 1.5, background: t.tealSoft, borderRadius: 10, padding: 10 }}>
-            This is a non-targeted, anonymized nudge — it goes out to whoever matches the group you pick below.
+            This is a general message that doesn't name any student — it goes out to whoever matches the group you pick below.
             You never select or see individual students here.
           </div>
 

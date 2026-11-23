@@ -22,15 +22,15 @@ const TIMEFRAMES = [
 const TABS = [
   { key: "all", label: "All Cases", test: () => true },
   { key: "critical", label: "Critical", test: (c) => c.risk === "critical" },
-  { key: "moderate", label: "At-Risk", test: (c) => c.risk === "moderate" },
-  { key: "connect", label: "Connect Requests", test: (c) => !!c.flag?.connect_requested && c.flag.status !== "resolved" },
+  { key: "moderate", label: "Needs Attention", test: (c) => c.risk === "moderate" },
+  { key: "connect", label: "Requests to Talk", test: (c) => !!c.flag?.connect_requested && c.flag.status !== "resolved" },
   { key: "review", label: "In Review", test: (c) => c.flag?.status === "in_progress" },
-  { key: "stable", label: "Resolved / Stable", test: (c) => c.risk === "stable" },
+  { key: "stable", label: "Resolved or Steady", test: (c) => c.risk === "stable" },
 ];
 
 const EMPTY = {
-  critical: ["All urgent flags addressed.", "No students urgently need help right now."],
-  connect: ["No pending connect requests.", "New requests appear here the moment a student asks to talk."],
+  critical: ["All urgent alerts handled.", "No students urgently need help right now."],
+  connect: ["No pending requests to talk.", "New requests appear here the moment a student asks to talk."],
   review: ["Nothing in review.", "Cases you acknowledge move here while you follow up."],
 };
 
@@ -133,7 +133,7 @@ export default function CounselorPortal({ onUnauthorized }) {
           const wantsConnect = added.some((c) => c.flag?.connect_requested);
           notify(
             added.length === 1
-              ? `${wantsConnect ? "New connect request" : "New case"}: ${added[0].alias}`
+              ? `${wantsConnect ? "New request to talk" : "New case"}: ${added[0].alias}`
               : `${added.length} new cases need attention`,
             wantsConnect ? "reward" : "warn"
           );

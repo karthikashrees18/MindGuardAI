@@ -47,6 +47,8 @@ export const PLAYLIST_STATES = [
   { key: "focus", label: "Focus", hint: "When I need to get things done" },
 ];
 
+export const YEARS = ["1st year", "2nd year", "3rd year", "4th year", "5th year+", "Postgraduate", "PhD"];
+
 export const MOODS = [
   { emoji: "😀", label: "Great" },
   { emoji: "🙂", label: "Good" },
@@ -57,9 +59,9 @@ export const MOODS = [
 
 // The three score bands from the product spec.
 export const CATEGORY_META = {
-  calm: { label: "Normal / Calm", range: "0–40", color: "var(--teal)", icon: "calm" },
-  mild: { label: "Mild Overthinking", range: "41–70", color: "var(--amber)", icon: "mild" },
-  critical: { label: "Critical / High Stress", range: "71–100", color: "var(--coral)", icon: "critical" },
+  calm: { label: "Calm", range: "0–40", color: "var(--teal)", icon: "calm" },
+  mild: { label: "Some Overthinking", range: "41–70", color: "var(--amber)", icon: "mild" },
+  critical: { label: "High Stress", range: "71–100", color: "var(--coral)", icon: "critical" },
 };
 
 export function categoryOf(score) {

@@ -53,6 +53,8 @@ export const adminApi = {
   listBroadcasts: () => request("/api/admin/broadcast-resource"),
   createBroadcast: (payload) =>
     request("/api/admin/broadcast-resource", { method: "POST", body: JSON.stringify(payload) }),
+  // Read-only, sanitized collections + recent documents (counselor/admin only).
+  dbOverview: () => request("/api/admin/db-overview"),
   exportSummaryCsvUrl: (period) => `${API_BASE}/api/admin/export/summary.csv?period=${period}`,
 };
 
@@ -94,4 +96,14 @@ export function clearAdminToken() {
 
 export function getAdminToken() {
   return localStorage.getItem("mga_admin_token");
+}
+
+// Public OpenAPI schema + Swagger UI served by the backend itself.
+export const OPENAPI_URL = `${API_BASE}/openapi.json`;
+export const SWAGGER_URL = `${API_BASE}/docs`;
+export async function fetchOpenApi() {
+  let res;
+  try { res = await fetch(OPENAPI_URL); } catch { throw new Error(`Can't reach ${OPENAPI_URL}. Is the backend running?`); }
+  if (!res.ok) throw new Error(`Couldn't load the API description (${res.status}).`);
+  return res.json();
 }

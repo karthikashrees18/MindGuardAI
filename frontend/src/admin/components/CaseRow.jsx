@@ -52,7 +52,7 @@ export default function CaseRow({ c, selected, fresh, busy, onOpen, onReach, onA
         <div className="mg-stack-sm" style={{ gap: 2, minWidth: 0 }}>
           <span className={`mga-trend ${trend.cls}`}>{trend.text}</span>
           <span className="mg-tiny mg-faint">
-            {flag ? `Flagged ${ago(flag.created_at)}` : `Last entry ${ago(c.latest_at) || "—"}`}
+            {flag ? `Alert raised ${ago(flag.created_at)}` : `Last entry ${ago(c.latest_at) || "—"}`}
           </span>
         </div>
       </div>

@@ -245,22 +245,22 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
               )}
 
               <div className="mga-section">
-                <h4>Early-warning flag</h4>
+                <h4>Early-warning alert</h4>
                 {flag ? (
                   <>
-                    <div className="mga-kv"><span>Severity</span><span style={{ textTransform: "capitalize" }}>{flag.severity}</span></div>
+                    <div className="mga-kv"><span>Urgency level</span><span style={{ textTransform: "capitalize" }}>{flag.severity}</span></div>
                     <div className="mga-kv"><span>Status</span><span style={{ textTransform: "capitalize" }}>{flag.status.replace(/_/g, " ")}</span></div>
-                    <div className="mga-kv"><span>Flagged</span><span>{fmtDateTime(flag.created_at)} ({ago(flag.created_at)})</span></div>
+                    <div className="mga-kv"><span>Raised</span><span>{fmtDateTime(flag.created_at)} ({ago(flag.created_at)})</span></div>
                     {flag.reason && <div className="mga-kv"><span>Reason</span><span>{flag.reason}</span></div>}
                   </>
                 ) : (
-                  <div className="mg-small mg-faint">No open early-warning flag. Actions are available once a flag is raised.</div>
+                  <div className="mg-small mg-faint">No open early-warning alert. Actions become available once an alert is raised.</div>
                 )}
               </div>
 
               {ch && (
                 <div className="mga-section" style={{ borderColor: "rgba(167,139,250,0.45)" }}>
-                  <h4>Connect request</h4>
+                  <h4>Request to talk</h4>
                   <div className="mga-kv">
                     <span>Preferred way to be reached</span>
                     <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><ch.Icon size={14} aria-hidden="true" /> {ch.label}</span>
@@ -462,7 +462,7 @@ function ResolveDialog({ open, alias, onClose, onSubmit }) {
     <Modal open={open} onClose={onClose} title={`Resolve ${alias}?`}
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button variant="teal" loading={busy} onClick={() => run({ type: "resolve", note: note.trim() || undefined })}>Yes, resolve</Button></>}>
       <div className="mg-stack-sm">
-        <p className="mg-small mg-muted">This closes the early-warning flag.</p>
+        <p className="mg-small mg-muted">This closes the early-warning alert.</p>
         <Field label="Closing note (optional)">
           <textarea className="mg-textarea" style={{ minHeight: 70 }} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>

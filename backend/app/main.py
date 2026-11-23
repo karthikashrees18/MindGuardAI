@@ -39,7 +39,14 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Mind Guard AI — Backend", lifespan=lifespan)
+# Interactive API docs: Swagger UI at /docs, ReDoc at /redoc, schema at /openapi.json.
+app = FastAPI(
+    title="Mind Guard AI — Backend",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
 
 
 app.add_middleware(
