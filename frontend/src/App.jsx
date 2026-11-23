@@ -85,7 +85,7 @@ export default function App() {
     if (COUNSELOR_ROUTES.includes(path)) { window.location.replace(COUNSELOR_URL); return; }
     if (booting) return;
     if (!user && !PUBLIC.includes(path)) navigate("/", { replace: true });
-    else if (user && PUBLIC.includes(path)) navigate("/home", { replace: true });
+    else if (user && (path === "/login" || path === "/signup")) navigate("/home", { replace: true });
     else if (user && path !== "/onboarding" && !PRIVATE_ROUTES[path]) navigate("/home", { replace: true });
   }, [user, booting, path]);
 
@@ -96,6 +96,8 @@ export default function App() {
     body = <StaffNotice account={staffAccount} />;
   } else if (!user) {
     body = path === "/login" ? <Auth mode="login" /> : path === "/signup" ? <Auth mode="signup" /> : <Landing />;
+  } else if (path === "/") {
+    body = <Landing />;
   } else if (path === "/onboarding") {
     body = <Onboarding />;
   } else {

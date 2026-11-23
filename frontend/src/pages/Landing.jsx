@@ -13,7 +13,7 @@ const FEATURES = [
 ];
 
 export default function Landing() {
-  const { theme, toggleTheme } = useApp();
+  const { theme, toggleTheme, user } = useApp();
   return (
     <>
       <Aurora />
@@ -27,7 +27,9 @@ export default function Landing() {
             <button type="button" className="mg-btn ghost sm" onClick={toggleTheme} aria-label="Toggle light or dark theme">
               {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
             </button>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>Sign in</Button>
+            {user
+              ? <Button variant="ghost" size="sm" onClick={() => navigate("/home")}>Dashboard</Button>
+              : <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>Sign in</Button>}
           </div>
         </nav>
 
@@ -42,8 +44,14 @@ export default function Landing() {
             and gently guides you back to calm, before it becomes a crisis.
           </p>
           <div className="mg-hero-cta">
-            <Button variant="violet" size="lg" onClick={() => navigate("/signup")}>Get started <ArrowRight size={18} /></Button>
-            <Button variant="ghost" size="lg" onClick={() => navigate("/login")}>Sign in</Button>
+            {user ? (
+              <Button variant="violet" size="lg" onClick={() => navigate("/home")}>Open dashboard <ArrowRight size={18} /></Button>
+            ) : (
+              <>
+                <Button variant="violet" size="lg" onClick={() => navigate("/signup")}>Get started <ArrowRight size={18} /></Button>
+                <Button variant="ghost" size="lg" onClick={() => navigate("/login")}>Sign in</Button>
+              </>
+            )}
           </div>
         </header>
 
