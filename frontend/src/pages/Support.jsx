@@ -84,7 +84,7 @@ export default function Support() {
                   Confidential. You choose whether they see your name, and they never see what you wrote.
                 </p>
                 <Button variant="teal" icon={HeartHandshake} onClick={() => setConnectOpen(true)} disabled={requested}>
-                  {requested ? "Request sent" : "Send a connect request"}
+                  {requested ? "Request sent" : "Ask to talk to a counselor"}
                 </Button>
               </div>
             </div>

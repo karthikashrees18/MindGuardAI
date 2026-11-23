@@ -6,6 +6,7 @@ import { CATEGORY_META } from "../lib/constants";
 import { Button, CategoryBadge, Card, PageHeader, Skeleton } from "../components/ui";
 import { EarlyWarningBanner } from "../components/EarlyWarning";
 import InterventionCards from "../components/Interventions";
+import CustomPlaylist from "../components/CustomPlaylist";
 import { navigate } from "../lib/router";
 
 const DESTINATIONS = [
@@ -46,7 +47,7 @@ export default function CalmSpace() {
 
   return (
     <>
-      <PageHeader title="Calm space" subtitle="Small, science-backed resets to interrupt a spiral — chosen for how you're doing." />
+      <PageHeader title="Calm space" subtitle="Small, simple resets to help you stop overthinking — chosen for how you're doing." />
       <div className="mg-stack">
         <EarlyWarningBanner />
 
@@ -79,6 +80,8 @@ export default function CalmSpace() {
             </Card>
 
             <InterventionCards cards={data.cards} musicOverride={override} />
+
+            <Card><CustomPlaylist /></Card>
           </>
         )}
       </div>

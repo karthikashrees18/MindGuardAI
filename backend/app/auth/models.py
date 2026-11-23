@@ -74,6 +74,29 @@ class OnboardingUpdate(BaseModel):
     checkin_time: Optional[Literal["morning", "evening"]] = None
 
 
+class ContactUpdate(BaseModel):
+    full_name: Optional[str] = None
+    relationship: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+
+
+class ProfileUpdate(BaseModel):
+    """Editable sign-up details. Email and role are intentionally absent  - 
+    they are read-only. Only fields that are sent are changed."""
+    name: Optional[str] = Field(default=None, min_length=2, max_length=120)
+    preferred_name: Optional[str] = Field(default=None, max_length=80)
+    institution: Optional[str] = Field(default=None, max_length=160)
+    department: Optional[str] = Field(default=None, max_length=160)
+    year_of_study: Optional[str] = Field(default=None, max_length=40)
+    checkin_time: Optional[Literal["morning", "evening", ""]] = None
+    privacy_consent: Optional[bool] = None
+    crisis_consent: Optional[bool] = None
+    peer_contact: Optional[ContactUpdate] = None
+    # Any open.spotify.com/playlist/<id> or spotify:playlist:<id> link; "" removes it.
+    custom_playlist: Optional[str] = Field(default=None, max_length=300)
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -101,3 +124,11 @@ class UserOut(BaseModel):
     music: Optional[MusicPreferences] = None
     onboarding_complete: bool = False
     is_demo: bool = False
+    # Everything collected at sign-up, so the Profile page can show / edit it.
+    department: Optional[str] = None
+    year_of_study: Optional[str] = None
+    privacy_consent: bool = False
+    crisis_consent: bool = False
+    peer_contact: Optional[Dict[str, Optional[str]]] = None
+    custom_playlist: Optional[str] = None  # Spotify playlist id
+    created_at: Optional[str] = None

@@ -82,7 +82,7 @@ function Result({ result, text, onAgain }) {
               <div className="mg-row-wrap" style={{ marginBottom: 8 }}>
                 <CategoryBadge category={cat} />
                 <span className="mg-badge violet">Mood: {a.mood}</span>
-                <span className="mg-badge violet" title="How your text was read">
+                <span className="mg-badge violet" title="What we noticed in your writing">
                   <Brain size={12} /> {a.engine === "groq" ? "Read by cloud AI" : "Read privately on your device"}
                 </span>
               </div>
@@ -118,7 +118,7 @@ function Result({ result, text, onAgain }) {
         <Card>
           <div className="mg-row" style={{ marginBottom: 12 }}>
             <Info size={16} style={{ color: "var(--lavender)" }} />
-            <div className="mg-h3">Why this score?</div>
+            <div className="mg-h3">How we got this score</div>
           </div>
           <div className="mg-stack-sm">
             {a.factors.map((f, i) => (

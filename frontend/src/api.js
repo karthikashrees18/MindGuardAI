@@ -84,6 +84,10 @@ export const api = {
   me: () => request("/api/auth/me"),
   // body: { baseline?, music?, preferred_name?, checkin_time? }  -> returns the updated user
   saveOnboarding: (body) => put("/api/auth/onboarding", body),
+  // body: any of { name, preferred_name, institution, department, year_of_study, checkin_time,
+  //   privacy_consent, crisis_consent, peer_contact:{full_name,relationship,phone_number,email},
+  //   custom_playlist (Spotify link; "" removes) }  -> returns the updated user
+  saveProfile: (body) => put("/api/auth/profile", body),
 
   // ---- check-ins / journal -----------------------------------------------
   // body: { text, mood?, stress_level?, source?: "checkin"|"vent"|"reflection" }

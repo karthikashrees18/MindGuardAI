@@ -127,7 +127,7 @@ export default function AdminDashboard({ t, period, setPeriod, showBroadcastModa
           />
           <MetricCard
             t={t} icon={TrendingUp} iconColor={t.coralDeep} iconBg={t.coralSoft}
-            label="Students at moderate or high risk" value={loading ? "—" : `${kpis?.high_moderate_risk_percent ?? 0}%`}
+            label="Students who may need support" value={loading ? "—" : `${kpis?.high_moderate_risk_percent ?? 0}%`}
             sub={stats ? `of ${stats.sample_size} active students` : ""}
             ctaLabel="Send broadcast" onCtaClick={() => setShowBroadcastModal(true)}
           />
