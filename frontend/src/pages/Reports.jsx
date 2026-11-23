@@ -165,7 +165,7 @@ export default function Reports() {
 
       <Card>
         <div className="mg-h3" style={{ marginBottom: 4 }}>Score over time</div>
-        <p className="mg-small mg-faint" style={{ marginBottom: 10 }}>Lower is calmer. Dotted lines mark the 40 and 70 bands.</p>
+        <p className="mg-small mg-faint" style={{ marginBottom: 10 }}>Lower is calmer. Dotted lines mark the 40 and 70 levels.</p>
         {data.length ? (
           <div className="mg-chart-wrap" role="img" aria-label={`Area chart of your last ${data.length} scores`}>
             <ResponsiveContainer width="100%" height="100%">

@@ -5,8 +5,8 @@ import { ago, channelMeta, sparkColor } from "./caseUtils";
 
 const RISK_LABEL = { critical: "Critical", moderate: "Moderate", stable: "Stable" };
 const TREND = {
-  rising: { cls: "rising", text: "↑ Rising Distress" },
-  easing: { cls: "easing", text: "↓ Stabilizing" },
+  rising: { cls: "rising", text: "↑ Getting Worse" },
+  easing: { cls: "easing", text: "↓ Improving" },
   steady: { cls: "steady", text: "→ Steady" },
   new: { cls: "new", text: "New" },
 };
@@ -39,7 +39,7 @@ export default function CaseRow({ c, selected, fresh, busy, onOpen, onReach, onA
           {inReview && <span className="mga-pill review">In Review</span>}
         </div>
         {c.tags?.length > 0 && (
-          <div className="mga-tags" aria-label="Distress markers">
+          <div className="mga-tags" aria-label="Warning signs">
             {c.tags.map((t) => <span key={t} className="mga-tag sm">{t}</span>)}
           </div>
         )}

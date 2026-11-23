@@ -188,7 +188,7 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
                 {loading ? (
                   <Skeleton height={180} />
                 ) : chartData.length ? (
-                  <div style={{ width: "100%", height: 200 }} role="img" aria-label="Rumination score over time">
+                  <div style={{ width: "100%", height: 200 }} role="img" aria-label="Overthinking score over time">
                     <ResponsiveContainer>
                       <AreaChart data={chartData} margin={{ left: -18, right: 8, top: 8, bottom: 0 }}>
                         <defs>
@@ -214,7 +214,7 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
 
               {counts && (
                 <div className="mga-section">
-                  <h4>Category distribution</h4>
+                  <h4>Score breakdown</h4>
                   {total ? (
                     <div className="mga-catbar" role="img" aria-label={`Calm ${counts.calm}, mild ${counts.mild}, critical ${counts.critical}`}>
                       {["calm", "mild", "critical"].map((k) =>
@@ -235,7 +235,7 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
 
               {detail?.top_triggers?.length > 0 && (
                 <div className="mga-section">
-                  <h4>Top trigger tags</h4>
+                  <h4>Most common triggers</h4>
                   <div className="mg-row-wrap">
                     {detail.top_triggers.map((tg) => (
                       <span key={tg.key} className="mga-tag">{tg.label} <i>{tg.count}</i></span>
@@ -262,7 +262,7 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
                 <div className="mga-section" style={{ borderColor: "rgba(167,139,250,0.45)" }}>
                   <h4>Connect request</h4>
                   <div className="mga-kv">
-                    <span>Preferred channel</span>
+                    <span>Preferred way to be reached</span>
                     <span style={{ display: "inline-flex", gap: 6, alignItems: "center" }}><ch.Icon size={14} aria-hidden="true" /> {ch.label}</span>
                   </div>
                   {flag.connect_requested_at && <div className="mga-kv"><span>Requested</span><span>{ago(flag.connect_requested_at)}</span></div>}
@@ -314,8 +314,8 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
               </div>
 
               <div className="mga-section">
-                <h4><NotebookPen size={12} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Internal counselor notes</h4>
-                <p className="mg-tiny mg-faint" style={{ margin: "0 0 8px" }}>Private to counselors and encrypted at rest. Never shown to the student.</p>
+                <h4><NotebookPen size={12} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Private counselor notes</h4>
+                <p className="mg-tiny mg-faint" style={{ margin: "0 0 8px" }}>Only counselors can see these, and they are stored securely. Never shown to the student.</p>
                 <textarea className="mg-textarea" style={{ minHeight: 72 }} maxLength={2000} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)}
                   placeholder="e.g. Outreach completed on Nov 10; follow up after lab exams." aria-label="New private note" />
                 <div className="mg-row mg-between" style={{ marginTop: 8 }}>
@@ -354,7 +354,7 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
 
               <div className="mg-small mg-faint" style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <ShieldCheck size={14} style={{ flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
-                Scores, trends and trigger tags only. Journal and chat text is never shown.
+                Only scores, trends and triggers are shown. Journal and chat text is never shown.
               </div>
             </>
           )}
@@ -363,7 +363,7 @@ export default function CaseDrawer({ alias, listCase, onClose, onChanged, notify
         <div className="mga-drawer-foot">
           <Button variant="ghost" icon={CheckCheck} onClick={quickReview} disabled={!canAct}>Mark reviewed</Button>
           <Button variant="ghost" icon={CalendarClock} onClick={() => setDialog("schedule")} disabled={!canAct}>Schedule Session</Button>
-          <Button variant="violet" icon={MessageCircle} onClick={() => setDialog("outreach")} disabled={!canAct}>Send In-App Counselor Nudge</Button>
+          <Button variant="violet" icon={MessageCircle} onClick={() => setDialog("outreach")} disabled={!canAct}>Send In-App Message</Button>
           <Button variant="teal" icon={Check} onClick={() => setDialog("resolve")} disabled={!canAct}>Resolve</Button>
         </div>
       </aside>
@@ -411,7 +411,7 @@ function ScheduleDialog({ open, onClose, onSubmit }) {
     run({ type: "schedule", scheduled_for: d.toISOString(), note: note.trim() || undefined });
   }
   return (
-    <Modal open={open} onClose={onClose} title="Schedule in-person / virtual session"
+    <Modal open={open} onClose={onClose} title="Schedule an in-person or online session"
       footer={<><Button variant="ghost" onClick={onClose}>Cancel</Button><Button loading={busy} onClick={go}>Schedule</Button></>}>
       <div className="mg-stack-sm">
         <p className="mg-small mg-muted">The student is notified confidentially that a counselor session is planned.</p>

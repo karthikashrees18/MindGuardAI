@@ -64,7 +64,7 @@ export function RecoveryStep({ value, onChange, error }) {
 export function CopingStep({ value, onChange }) {
   return (
     <div className="mg-stack">
-      <StepTitle title="What helps you ground yourself?" sub="We'll lean on these when you need a gentle nudge." />
+      <StepTitle title="What helps you calm down?" sub="We'll lean on these when you need a gentle nudge." />
       <div className="mg-stack" style={{ gap: 8 }}>
         {COPING.map((c) => (
           <Choice key={c.key} icon={COPING_ICONS[c.key]} on={value.includes(c.key)} onClick={() => onChange(toggleIn(value, c.key))} title={c.label} hint={c.hint} />

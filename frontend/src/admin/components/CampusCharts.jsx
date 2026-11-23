@@ -15,11 +15,11 @@ export function TrendCard({ ov }) {
   const data = useMemo(() => (ov?.trend || []).map((p) => ({ ...p, label: fmtDay(p.date) })), [ov]);
   const hasData = data.some((p) => p.stress != null);
   return (
-    <section className="mga-panel" aria-label="Campus distress trend">
+    <section className="mga-panel" aria-label="Campus stress trend">
       <div className="mga-panel-h">
         <div>
-          <h3>Campus distress trend</h3>
-          <p>Average stress score vs wellness, against the campus baseline{ov?.baseline != null ? ` (${ov.baseline})` : ""}</p>
+          <h3>Campus stress trend</h3>
+          <p>Average stress score vs wellness, compared with the usual campus level{ov?.baseline != null ? ` (${ov.baseline})` : ""}</p>
         </div>
         <div className="mga-legend">
           <span><i style={{ background: CHART.coral }} />Stress</span>
@@ -40,14 +40,14 @@ export function TrendCard({ ov }) {
               <XAxis dataKey="label" tick={{ fontSize: 10, fill: CHART.axis }} axisLine={{ stroke: CHART.grid }} tickLine={false} minTickGap={16} />
               <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fontSize: 10, fill: CHART.axis }} axisLine={false} tickLine={false} width={34} />
               <Tooltip {...tooltipStyles} />
-              {ov.baseline != null && <ReferenceLine y={ov.baseline} stroke={CHART.axis} strokeDasharray="5 5" label={{ value: "baseline", fill: CHART.axis, fontSize: 10, position: "insideTopRight" }} />}
+              {ov.baseline != null && <ReferenceLine y={ov.baseline} stroke={CHART.axis} strokeDasharray="5 5" label={{ value: "usual level", fill: CHART.axis, fontSize: 10, position: "insideTopRight" }} />}
               <Area type="monotone" dataKey="stress" name="Stress" stroke={CHART.coral} strokeWidth={2.4} fill="url(#mgaStress)" connectNulls dot={{ r: 3, fill: CHART.coral, strokeWidth: 0 }} />
               <Line type="monotone" dataKey="wellness" name="Wellness" stroke={CHART.teal} strokeWidth={2.2} connectNulls dot={{ r: 3, fill: CHART.teal, strokeWidth: 0 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="mga-chart-empty">Not enough check-ins per day yet to show a trend without risking re-identification (minimum {ov.k_threshold} students per day).</div>
+        <div className="mga-chart-empty">Not enough check-ins per day yet to show a trend without revealing who they are (at least {ov.k_threshold} students per day are needed).</div>
       )}
     </section>
   );
@@ -56,15 +56,15 @@ export function TrendCard({ ov }) {
 export function StressorCard({ factors, kThreshold }) {
   const data = (factors || []).map((f) => ({ tag: f.tag, count: f.count }));
   return (
-    <section className="mga-panel" aria-label="Primary stressors">
+    <section className="mga-panel" aria-label="Main causes of stress">
       <div className="mga-panel-h">
         <div>
-          <h3>Primary detected stressors</h3>
-          <p>Entries mentioning each theme. Shown only when {kThreshold ?? 5}+ entries support it.</p>
+          <h3>Main causes of stress</h3>
+          <p>Number of entries that mention each topic. Shown only when at least {kThreshold ?? 5} entries mention it.</p>
         </div>
       </div>
       {!factors ? <div className="mg-skeleton" style={{ height: 220 }} /> : data.length ? (
-        <div style={{ width: "100%", height: Math.max(190, data.length * 38) }} role="img" aria-label="Stressor counts">
+        <div style={{ width: "100%", height: Math.max(190, data.length * 38) }} role="img" aria-label="Counts of each cause of stress">
           <ResponsiveContainer>
             <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 0 }}>
               <CartesianGrid stroke={CHART.grid} strokeDasharray="4 4" horizontal={false} />
@@ -78,7 +78,7 @@ export function StressorCard({ factors, kThreshold }) {
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="mga-chart-empty">Not enough entries yet to report a stressor without risking re-identification.</div>
+        <div className="mga-chart-empty">Not enough entries yet to show causes of stress without revealing who wrote them.</div>
       )}
     </section>
   );

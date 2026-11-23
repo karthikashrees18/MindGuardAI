@@ -10,10 +10,10 @@ export default function StressFactorsChart({ t, factors, kThreshold }) {
   return (
     <Card>
       <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>
-        Top reported stress factors this period
+        Top causes of stress this period
       </div>
       <div style={{ fontSize: 11.5, color: t.textFaint, marginBottom: 8 }}>
-        Tags derived from journal text · only shown once at least {kThreshold} entries mention them
+        Topics found in journal entries · shown only when at least {kThreshold} entries mention them
       </div>
       {data.length ? (
         <div style={{ width: "100%", height: 260 }}>
@@ -33,7 +33,7 @@ export default function StressFactorsChart({ t, factors, kThreshold }) {
         </div>
       ) : (
         <div style={{ fontSize: 12.5, color: t.textFaint, padding: "40px 0", textAlign: "center" }}>
-          Not enough entries yet to report a stress factor without risking re-identification.
+          Not enough entries yet to show causes of stress without revealing who wrote them.
         </div>
       )}
     </Card>

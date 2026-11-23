@@ -13,7 +13,7 @@ export default function RiskDistributionChart({ t, distribution, sampleSize }) {
   return (
     <Card>
       <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>
-        Overall student mental state distribution
+        How students are doing overall
       </div>
       <div style={{ fontSize: 11.5, color: t.textFaint, marginBottom: 8 }}>
         {sampleSize != null ? `Based on ${sampleSize} active students this period` : ""}

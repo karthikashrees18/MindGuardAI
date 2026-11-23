@@ -103,7 +103,7 @@ export default function Chat() {
         <div className="mg-stack">
           <EarlyWarningBanner />
           <Card>
-            <div className="mg-h3" style={{ marginBottom: 12 }}>Live wellness signal</div>
+            <div className="mg-h3" style={{ marginBottom: 12 }}>Live wellness check</div>
             {!signal ? (
               <p className="mg-muted mg-small">Say something to get started — your score updates with every message.</p>
             ) : (

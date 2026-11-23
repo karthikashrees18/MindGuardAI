@@ -6,7 +6,7 @@ import { navigate } from "../lib/router";
 import "../styles/auth.css";
 
 const FEATURES = [
-  { icon: Brain, tone: "violet", title: "Two-engine detection", body: "Mood and overthinking are analysed by two complementary AI engines, so subtle signs are caught early." },
+  { icon: Brain, tone: "violet", title: "Early warning signs", body: "Your mood and overthinking are checked by two AI tools working together, so small warning signs are caught early." },
   { icon: Music, tone: "teal", title: "Music that calms", body: "Personalised soundscapes and your own playlists, chosen for how you feel right now." },
   { icon: Sprout, tone: "amber", title: "Games and a garden", body: "Gentle mini-games and breathing exercises that grow a wellness garden as you look after yourself." },
   { icon: UsersRound, tone: "coral", title: "Counselor connect", body: "When you want support, reach a counselor confidentially. You decide what gets shared." },

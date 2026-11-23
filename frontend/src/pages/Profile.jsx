@@ -63,7 +63,7 @@ export default function Profile() {
 
   return (
     <>
-      <PageHeader title="Profile" subtitle="Your baseline helps Mind Guard read your entries fairly — you can change it any time." />
+      <PageHeader title="Profile" subtitle="Your answers below help Mind Guard understand your entries fairly — you can change them any time." />
       <div className="mg-grid mg-grid-main-r" style={{ alignItems: "start" }}>
         <Card className="mg-stack" style={{ alignItems: "center", textAlign: "center" }}>
           <div className="mg-hero-orb" style={{ width: 78, height: 78, borderRadius: 24, fontSize: 26, fontWeight: 800, animation: "none" }}>{initials}</div>
@@ -81,13 +81,13 @@ export default function Profile() {
         <div className="mg-stack">
           <Card className="mg-stack">
             <div className="mg-row mg-between">
-              <div className="mg-h3">Your baseline</div>
+              <div className="mg-h3">Your answers</div>
               <Button variant="ghost" size="sm" icon={Pencil} onClick={() => setEditing(true)}>Edit</Button>
             </div>
             <div><div className="mg-tiny mg-faint" style={{ marginBottom: 6 }}>Triggers</div><Chips items={b.triggers} list={TRIGGERS} /></div>
             <div><div className="mg-tiny mg-faint" style={{ marginBottom: 6 }}>Usual recovery time</div>
               {b.recovery ? <span className="mg-badge mild">{label(RECOVERY, b.recovery)}</span> : <span className="mg-faint mg-small">Not set</span>}</div>
-            <div><div className="mg-tiny mg-faint" style={{ marginBottom: 6 }}>What helps me ground</div><Chips items={b.coping} list={COPING} /></div>
+            <div><div className="mg-tiny mg-faint" style={{ marginBottom: 6 }}>What helps me calm down</div><Chips items={b.coping} list={COPING} /></div>
             <hr className="mg-divider" />
             <div><div className="mg-tiny mg-faint" style={{ marginBottom: 6 }}>Music genres</div><Chips items={m.genres} list={GENRES} /></div>
             <div><div className="mg-tiny mg-faint" style={{ marginBottom: 6 }}>Languages</div><Chips items={m.languages} list={LANGUAGES} /></div>
@@ -118,7 +118,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <Modal open={editing} onClose={() => setEditing(false)} title="Edit your baseline" width={560}>
+      <Modal open={editing} onClose={() => setEditing(false)} title="Edit your answers" width={560}>
         <BaselineWizard initialBaseline={b} initialMusic={m} submitLabel="Save changes" onSubmit={saveBaseline} onCancel={() => setEditing(false)} />
       </Modal>
     </>
