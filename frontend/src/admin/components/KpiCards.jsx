@@ -17,7 +17,7 @@ function Kpi({ cls, icon: Icon, label, value, sub, delta, pct, active, onClick, 
   );
 }
 
-const since = (n) => (n > 0 ? `+${n} since yesterday` : "No new flags in 24h");
+const since = (n) => (n > 0 ? `+${n} since yesterday` : "No new alerts in the last 24 hours");
 
 export default function KpiCards({ ov, tab, onPick }) {
   const loading = !ov;
@@ -32,9 +32,9 @@ export default function KpiCards({ ov, tab, onPick }) {
         value={ov?.moderate.count} pct={ov?.moderate.pct}
         sub={ov && `${ov.moderate.pct}% of ${ov.monitored} students`} delta={ov && (ov.moderate.new_24h > 0 ? `+${ov.moderate.new_24h} since yesterday` : "Monitoring")}
         onClick={() => toggle("moderate")} />
-      <Kpi cls="stable" icon={Leaf} label="Stable / flourishing" loading={loading} active={tab === "stable"}
+      <Kpi cls="stable" icon={Leaf} label="Stable / doing well" loading={loading} active={tab === "stable"}
         value={ov?.stable.count} pct={ov?.stable.pct}
-        sub={ov && `${ov.stable.count} of ${ov.monitored} students stable (${ov.stable.pct}%)`} delta={ov && "Healthy baseline"}
+        sub={ov && `${ov.stable.count} of ${ov.monitored} students stable (${ov.stable.pct}%)`} delta={ov && "Doing well"}
         onClick={() => toggle("stable")} />
       <Kpi cls="connect" icon={MessageCircle} label="Open connect requests" loading={loading} active={tab === "connect"}
         value={ov?.connect_requests.count} pct={ov?.connect_requests.pct} pulse={!!ov?.connect_requests.count}

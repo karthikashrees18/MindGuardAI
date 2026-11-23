@@ -29,9 +29,9 @@ function ScoreChip({ item }) {
   if (item.wellness_score == null) return null;
   // calm -> green (optimal), mild -> amber (moderate), critical -> red (high distress)
   const cat = item.category || categoryOf(item.rumination_score);
-  const tone = { calm: "optimal", mild: "moderate", critical: "high distress" }[cat] || "";
+  const tone = { calm: "doing well", mild: "moderate", critical: "high stress" }[cat] || "";
   return (
-    <span className={`mg-badge ${cat}`} title={`Rumination ${item.rumination_score}/100 · ${tone}`}>
+    <span className={`mg-badge ${cat}`} title={`Overthinking ${item.rumination_score}/100 · ${tone}`}>
       Wellness Score: {item.wellness_score}/100
     </span>
   );

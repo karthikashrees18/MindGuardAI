@@ -17,7 +17,7 @@ import AnomalyBanner from "./components/AnomalyBanner";
 const PERIODS = [
   { key: "7d", label: "Last 7 days" },
   { key: "30d", label: "Last 30 days" },
-  { key: "semester", label: "Semester-to-date" },
+  { key: "semester", label: "This semester so far" },
 ];
 
 export default function AdminDashboard({ t, period, setPeriod, showBroadcastModal, setShowBroadcastModal }) {
@@ -86,7 +86,7 @@ export default function AdminDashboard({ t, period, setPeriod, showBroadcastModa
         {/* Privacy badge */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: t.tealSoft, border: "1px solid var(--border)", borderRadius: 14, padding: "12px 16px", marginBottom: 18, fontSize: 12, color: t.teal, fontWeight: 600 }}>
           <ShieldCheck size={16} style={{ flexShrink: 0 }} />
-          Privacy Protected: end-to-end k-anonymized aggregate metrics. Individual student identities and personal journals are mathematically redacted.
+          Privacy protected: you only see group totals. Individual student names and personal journal entries are never shown.
         </div>
 
         {/* Time filter bar */}
@@ -116,25 +116,25 @@ export default function AdminDashboard({ t, period, setPeriod, showBroadcastModa
         <div className="mga-grid-4" style={{ marginBottom: 18 }}>
           <MetricCard
             t={t} icon={Users} iconColor={t.tealDeep} iconBg={t.tealSoft}
-            label="Active enrolled students" value={loading ? "—" : kpis?.total_active_students ?? "—"}
+            label="Active students" value={loading ? "—" : kpis?.total_active_students ?? "—"}
             ctaLabel="View breakdown" onCtaClick={() => scrollToSection("department-breakdown")}
           />
           <MetricCard
             t={t} icon={HeartPulse} iconColor={t.lavenderDeep} iconBg={t.lavenderSoft}
-            label="Campus wellness index" value={loading ? "—" : kpis?.wellness_index != null ? `${kpis.wellness_index}` : "—"}
+            label="Campus wellness score" value={loading ? "—" : kpis?.wellness_index != null ? `${kpis.wellness_index}` : "—"}
             sub="0–100, higher is better"
             ctaLabel="View trend" onCtaClick={() => scrollToSection("mood-trend")}
           />
           <MetricCard
             t={t} icon={TrendingUp} iconColor={t.coralDeep} iconBg={t.coralSoft}
-            label="Moderate/High risk flagged" value={loading ? "—" : `${kpis?.high_moderate_risk_percent ?? 0}%`}
+            label="Students at moderate or high risk" value={loading ? "—" : `${kpis?.high_moderate_risk_percent ?? 0}%`}
             sub={stats ? `of ${stats.sample_size} active students` : ""}
             ctaLabel="Send broadcast" onCtaClick={() => setShowBroadcastModal(true)}
           />
           <MetricCard
             t={t} icon={ClipboardCheck} iconColor={t.tealDeep} iconBg={t.tealSoft}
             label="Weekly check-in completion" value={loading ? "—" : `${kpis?.weekly_checkin_completion_rate ?? 0}%`}
-            ctaLabel="View utilization" onCtaClick={() => scrollToSection("resource-utilization")}
+            ctaLabel="View support usage" onCtaClick={() => scrollToSection("resource-utilization")}
           />
         </div>
 
@@ -160,7 +160,7 @@ export default function AdminDashboard({ t, period, setPeriod, showBroadcastModa
         <div id="resource-utilization" className="mga-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 16, scrollMarginTop: 20 }}>
           <Card>
             <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, marginBottom: 14 }}>
-              Counselor resource utilization
+              How support services are being used
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <UtilRow t={t} icon={PhoneCall} label="Crisis helpline taps" value={utilization?.helpline_taps} color={t.coralDeep} bg={t.coralSoft} />

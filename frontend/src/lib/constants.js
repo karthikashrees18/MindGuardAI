@@ -26,7 +26,7 @@ export const COPING = [
 export const GENRES = [
   { key: "lofi", label: "Lo-Fi" },
   { key: "classical", label: "Classical" },
-  { key: "ambient", label: "Ambient / Binaural" },
+  { key: "ambient", label: "Ambient / Relaxing" },
   { key: "indie", label: "Indie" },
   { key: "pop", label: "Pop" },
 ];
@@ -59,7 +59,7 @@ export const MOODS = [
 export const CATEGORY_META = {
   calm: { label: "Normal / Calm", range: "0–40", color: "var(--teal)", icon: "calm" },
   mild: { label: "Mild Overthinking", range: "41–70", color: "var(--amber)", icon: "mild" },
-  critical: { label: "Critical / High Distress", range: "71–100", color: "var(--coral)", icon: "critical" },
+  critical: { label: "Critical / High Stress", range: "71–100", color: "var(--coral)", icon: "critical" },
 };
 
 export function categoryOf(score) {

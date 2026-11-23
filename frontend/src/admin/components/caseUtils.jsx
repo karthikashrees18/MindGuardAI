@@ -43,7 +43,7 @@ export function TrendBadge({ trend }) {
 
 export const ACTION_LABELS = {
   reviewed: "Marked reviewed",
-  schedule: "Intervention scheduled",
+  schedule: "Session scheduled",
   outreach: "In-app message sent",
   resolve: "Resolved",
 };

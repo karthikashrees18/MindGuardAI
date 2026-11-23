@@ -14,8 +14,8 @@ const THEME_KEY = "mg_theme";
 
 // Section links — same set for counselors and admins (the backend enforces access per endpoint).
 const NAV = [
-  { key: "portal", label: "Counselor Portal", subtitle: "Live triage queue", icon: HeartPulse },
-  { key: "analytics", label: "Cohort Analytics", subtitle: "Anonymized campus trends", icon: LayoutDashboard },
+  { key: "portal", label: "Counselor Portal", subtitle: "Live list of students who may need support", icon: HeartPulse },
+  { key: "analytics", label: "Student Group Insights", subtitle: "Anonymous campus trends", icon: LayoutDashboard },
   { key: "messages", label: "Messages", subtitle: "Direct messages with students and staff", icon: MessagesSquare },
 ];
 

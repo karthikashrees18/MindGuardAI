@@ -76,7 +76,7 @@ export const TIER_LABELS = {
   normal: "Normal",
   mild: "Mild",
   moderate: "Moderate",
-  high_distress: "High Distress",
+  high_distress: "High Stress",
 };
 
 export function GlobalStyle() {

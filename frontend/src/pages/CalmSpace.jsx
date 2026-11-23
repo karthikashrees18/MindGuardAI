@@ -10,7 +10,7 @@ import { navigate } from "../lib/router";
 
 const DESTINATIONS = [
   { key: "calming", label: "Calm down" },
-  { key: "grounded", label: "Ground myself" },
+  { key: "grounded", label: "Feel steady" },
   { key: "focus", label: "Focus" },
   { key: "uplifting", label: "Lift my mood" },
 ];

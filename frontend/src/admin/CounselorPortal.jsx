@@ -21,7 +21,7 @@ const TIMEFRAMES = [
 
 const TABS = [
   { key: "all", label: "All Cases", test: () => true },
-  { key: "critical", label: "Critical Distress", test: (c) => c.risk === "critical" },
+  { key: "critical", label: "Critical", test: (c) => c.risk === "critical" },
   { key: "moderate", label: "At-Risk", test: (c) => c.risk === "moderate" },
   { key: "connect", label: "Connect Requests", test: (c) => !!c.flag?.connect_requested && c.flag.status !== "resolved" },
   { key: "review", label: "In Review", test: (c) => c.flag?.status === "in_progress" },
@@ -29,7 +29,7 @@ const TABS = [
 ];
 
 const EMPTY = {
-  critical: ["All urgent flags addressed.", "No students are currently in critical distress."],
+  critical: ["All urgent flags addressed.", "No students urgently need help right now."],
   connect: ["No pending connect requests.", "New requests appear here the moment a student asks to talk."],
   review: ["Nothing in review.", "Cases you acknowledge move here while you follow up."],
 };
@@ -218,8 +218,8 @@ export default function CounselorPortal({ onUnauthorized }) {
         <div className="mga-live" role="status" aria-live="polite">
           <span className={`mga-live-dot ${error ? "off" : ""}`} aria-hidden="true" />
           <div>
-            <b>{error ? "Connection issue" : "Live Monitoring Active"}</b>
-            <span>{updatedAt ? `Updated ${updatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })} · auto-refresh 20s` : "Connecting…"}</span>
+            <b>{error ? "Connection issue" : "Live updates on"}</b>
+            <span>{updatedAt ? `Updated ${updatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })} · refreshes every 20 seconds` : "Connecting…"}</span>
           </div>
           <button type="button" className="mga-icon-btn" onClick={() => load(true)} aria-label="Refresh now" disabled={refreshing}>
             <RefreshCw size={15} className={refreshing ? "mga-spin" : ""} />
@@ -228,7 +228,7 @@ export default function CounselorPortal({ onUnauthorized }) {
 
         <label className="mga-search">
           <Search size={15} aria-hidden="true" />
-          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search anonymous ID (MG-4E9EC) or marker" aria-label="Search cases" />
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search anonymous ID (MG-4E9EC) or keyword" aria-label="Search cases" />
         </label>
 
         <select className="mga-select" value={dept} onChange={(e) => setDept(e.target.value)} aria-label="Filter by department">
@@ -243,7 +243,7 @@ export default function CounselorPortal({ onUnauthorized }) {
         </div>
 
         <div className="mga-export">
-          <Button variant="ghost" size="sm" icon={Download} disabled={!pool.length} onClick={() => exportCsv(visible.length ? visible : pool, tf)}>Export Anonymized Report</Button>
+          <Button variant="ghost" size="sm" icon={Download} disabled={!pool.length} onClick={() => exportCsv(visible.length ? visible : pool, tf)}>Export Anonymous Report</Button>
           <button type="button" className="mga-icon-btn" onClick={() => window.print()} aria-label="Print summary"><Printer size={15} /></button>
         </div>
       </div>

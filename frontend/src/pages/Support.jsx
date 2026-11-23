@@ -108,7 +108,7 @@ export default function Support() {
         </div>
 
         <Card>
-          <div className="mg-h3" style={{ marginBottom: 4 }}>A 60-second grounding exercise</div>
+          <div className="mg-h3" style={{ marginBottom: 4 }}>A 60-second calming exercise</div>
           <p className="mg-muted mg-small" style={{ marginBottom: 12 }}>Slowly name, out loud or in your head:</p>
           <div className="mg-grid mg-grid-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))" }}>
             {GROUNDING.map(([n, t]) => (

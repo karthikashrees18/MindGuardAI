@@ -18,10 +18,10 @@ export default function DepartmentBarChart({ t, buckets, kThreshold, groupBy, se
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, flexWrap: "wrap", gap: 8 }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary }}>
-            Distress severity by {groupBy === "department" ? "department" : "year of study"}
+            Stress level by {groupBy === "department" ? "department" : "year of study"}
           </div>
           <div style={{ fontSize: 11.5, color: t.textFaint, marginTop: 2 }}>
-            Groups with fewer than {kThreshold} students are folded into "Other / Insufficient Data"
+            Small groups (fewer than {kThreshold} students) are combined into one group to protect privacy
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>

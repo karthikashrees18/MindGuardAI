@@ -12,10 +12,10 @@ export default function TrendsLineChart({ t, points }) {
   return (
     <Card>
       <div style={{ fontSize: 14, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>
-        Longitudinal campus mood trend
+        Campus mood over time
       </div>
       <div style={{ fontSize: 11.5, color: t.textFaint, marginBottom: 8 }}>
-        Average sentiment score (0-100, higher is better) per day
+        Average mood score (0-100, higher is better) per day
       </div>
       {data.length ? (
         <div style={{ width: "100%", height: 260 }}>
@@ -33,7 +33,7 @@ export default function TrendsLineChart({ t, points }) {
               <Tooltip
                 {...tooltipStyles}
               />
-              <Area type="monotone" dataKey="sentiment" name="Avg. sentiment" stroke={CHART.teal} strokeWidth={2.5} fill="url(#mgaTrendFill)" />
+              <Area type="monotone" dataKey="sentiment" name="Avg. mood" stroke={CHART.teal} strokeWidth={2.5} fill="url(#mgaTrendFill)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

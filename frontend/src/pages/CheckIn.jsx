@@ -77,13 +77,13 @@ function Result({ result, text, onAgain }) {
       <div className="mg-grid mg-grid-main">
         <Card glow tint={cat === "critical" ? "coral" : cat === "mild" ? "amber" : "teal"}>
           <div className="mg-row" style={{ gap: 20, flexWrap: "wrap" }}>
-            <ScoreRing score={a.rumination_score} size={150} label="RUMINATION" />
+            <ScoreRing score={a.rumination_score} size={150} label="OVERTHINKING" />
             <div className="mg-grow" style={{ minWidth: 220 }}>
               <div className="mg-row-wrap" style={{ marginBottom: 8 }}>
                 <CategoryBadge category={cat} />
                 <span className="mg-badge violet">Mood: {a.mood}</span>
-                <span className="mg-badge violet" title="Which engine read your text">
-                  <Brain size={12} /> {a.engine === "groq" ? "Groq AI + scoring engine" : "On-device NLP + scoring engine"}
+                <span className="mg-badge violet" title="How your text was read">
+                  <Brain size={12} /> {a.engine === "groq" ? "Read by cloud AI" : "Read privately on your device"}
                 </span>
               </div>
               <p style={{ fontSize: 15, lineHeight: 1.6 }}>{a.summary}</p>
@@ -101,15 +101,15 @@ function Result({ result, text, onAgain }) {
         </Card>
 
         <Card>
-          <div className="mg-h3" style={{ marginBottom: 12 }}>Dual-engine signals</div>
+          <div className="mg-h3" style={{ marginBottom: 12 }}>What we picked up</div>
           <div className="mg-stack-sm">
-            <Meter label="Sentiment" value={sentimentPct} text={a.sentiment > 0.15 ? "Positive" : a.sentiment < -0.15 ? "Negative" : "Neutral"} tone={a.sentiment < -0.15 ? "var(--coral)" : "var(--teal)"} />
-            <Meter label="Stress intensity" value={a.stress_intensity} text={`${a.stress_intensity}/100`} tone="var(--amber)" />
-            <Meter label="Rumination markers" value={a.overthinking_percent ?? 0} text={`${a.overthinking_percent ?? 0}%`} tone="var(--violet)" />
+            <Meter label="Mood tone" value={sentimentPct} text={a.sentiment > 0.15 ? "Positive" : a.sentiment < -0.15 ? "Negative" : "Neutral"} tone={a.sentiment < -0.15 ? "var(--coral)" : "var(--teal)"} />
+            <Meter label="Stress level" value={a.stress_intensity} text={`${a.stress_intensity}/100`} tone="var(--amber)" />
+            <Meter label="Signs of overthinking" value={a.overthinking_percent ?? 0} text={`${a.overthinking_percent ?? 0}%`} tone="var(--violet)" />
           </div>
           <hr className="mg-divider" style={{ margin: "14px 0" }} />
           <div className="mg-tiny mg-faint" style={{ marginBottom: 8 }}>
-            Score bands: {Object.entries(CATEGORY_META).map(([, v]) => `${v.range} ${v.label}`).join(" · ")}
+            Score ranges: {Object.entries(CATEGORY_META).map(([, v]) => `${v.range} ${v.label}`).join(" · ")}
           </div>
         </Card>
       </div>
@@ -143,19 +143,19 @@ function Result({ result, text, onAgain }) {
         </Card>
 
         <Card>
-          <div className="mg-h3" style={{ marginBottom: 12 }}>What the engine noticed</div>
+          <div className="mg-h3" style={{ marginBottom: 12 }}>What we noticed</div>
           {hasMarkers ? (
             <div className="mg-stack-sm">
-              <MarkerGroup title="Thought loops" items={m.thought_loops} tone="mild" />
-              <MarkerGroup title="Catastrophising" items={m.catastrophizing} tone="critical" />
-              <MarkerGroup title="Helplessness" items={m.helplessness} tone="critical" />
-              <MarkerGroup title="Self-blame" items={m.self_blame} tone="mild" />
-              <MarkerGroup title="Absolutist words" items={m.absolutist_language} tone="violet" />
+              <MarkerGroup title="Going in circles" items={m.thought_loops} tone="mild" />
+              <MarkerGroup title="Expecting the worst" items={m.catastrophizing} tone="critical" />
+              <MarkerGroup title="Feeling helpless" items={m.helplessness} tone="critical" />
+              <MarkerGroup title="Blaming yourself" items={m.self_blame} tone="mild" />
+              <MarkerGroup title="All-or-nothing words" items={m.absolutist_language} tone="violet" />
               <MarkerGroup title="Repeated words" items={m.repeated_words} tone="violet" />
-              <MarkerGroup title="Triggers detected" items={(a.triggers_detected || []).map((t) => t.replace(/_/g, " "))} tone="violet" />
+              <MarkerGroup title="Triggers found"items={(a.triggers_detected || []).map((t) => t.replace(/_/g, " "))} tone="violet" />
             </div>
           ) : (
-            <p className="mg-muted mg-small">No rumination markers — your writing reads steady and open. Nice.</p>
+            <p className="mg-muted mg-small">No signs of overthinking — your writing reads steady and open. Nice.</p>
           )}
           <hr className="mg-divider" style={{ margin: "14px 0" }} />
           <div className="mg-tiny mg-faint" style={{ marginBottom: 6 }}>Your words, with the phrases that mattered highlighted</div>
@@ -242,7 +242,7 @@ export default function CheckIn() {
 
   return (
     <>
-      <PageHeader title="How are you, really?" subtitle="Write freely. Two engines read your words for mood, stress and overthinking — privately." />
+      <PageHeader title="How are you, really?" subtitle="Write freely. Your words are read privately for mood, stress and overthinking." />
       <div className="mg-grid mg-grid-main">
         <Card className="mg-stack">
           <div className="mg-row-wrap" role="tablist" aria-label="Entry type">
@@ -297,7 +297,7 @@ export default function CheckIn() {
               </Button>
             )}
             <Button variant="" size="lg" loading={busy} disabled={!text.trim()} onClick={submit} icon={Wand2} className="mg-grow">
-              {busy ? "Reading your entry…" : "Analyze & save"}
+              {busy ? "Reading your entry…" : "Save & see results"}
             </Button>
           </div>
           {dictation.error && <div className="mg-error">{dictation.error}</div>}
@@ -309,7 +309,7 @@ export default function CheckIn() {
               <div className="mg-h3" style={{ marginBottom: 4 }}>Presentation shortcut</div>
               <p className="mg-small mg-muted" style={{ marginBottom: 10 }}>Load a ready-made entry to demo each band live.</p>
               <div className="mg-row-wrap">
-                <Button size="sm" variant="coral" onClick={() => { setText(SAMPLE_TEXTS.high); setStress(85); setMood(4); }}>High rumination</Button>
+                <Button size="sm" variant="coral" onClick={() => { setText(SAMPLE_TEXTS.high); setStress(85); setMood(4); }}>High overthinking</Button>
                 <Button size="sm" variant="ghost" onClick={() => { setText(SAMPLE_TEXTS.mild); setStress(55); setMood(3); }}>Mild</Button>
                 <Button size="sm" variant="teal" onClick={() => { setText(SAMPLE_TEXTS.calm); setStress(10); setMood(1); }}>Calm</Button>
               </div>
@@ -318,8 +318,8 @@ export default function CheckIn() {
           <Card>
             <div className="mg-h3" style={{ marginBottom: 8 }}>What happens next</div>
             <ol className="mg-small mg-muted" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
-              <li><b>Engine 1</b> reads sentiment, stress and rumination markers.</li>
-              <li><b>Engine 2</b> personalises a 0–100 score using your onboarding baseline.</li>
+              <li><b>Step 1:</b> we read your words for mood, stress and overthinking.</li>
+              <li><b>Step 2:</b> you get a personal 0–100 score, based on what you told us when you signed up.</li>
               <li>You get music, breathing, mini-games or a counselor connect chosen for you.</li>
               <li>Your garden grows — rest days are always fine.</li>
             </ol>

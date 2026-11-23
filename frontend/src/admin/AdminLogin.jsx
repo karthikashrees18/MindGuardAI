@@ -44,7 +44,7 @@ export default function AdminLogin({ onLogin, onDemoLogin }) {
             <ShieldCheck size={28} color="#fff" />
           </div>
           <div className="mg-h2">Mind Guard AI</div>
-          <div className="mg-small mg-muted">Counselor portal and cohort analytics</div>
+          <div className="mg-small mg-muted">Counselor portal and student group insights</div>
         </div>
 
         <form className="mg-stack-sm" onSubmit={submit}>
